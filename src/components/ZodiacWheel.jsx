@@ -1,170 +1,425 @@
 import { useEffect, useRef } from 'react';
-import { ZODIAC_GLYPHS, NAKSHATRAS, calculateAspects, formatDistance, destinationZoneFromBearing, getSignData } from '../lib/astro';
+import {
+  ZODIAC_GLYPHS,
+  NAKSHATRAS,
+  calculateAspects,
+  formatDistance,
+  destinationZoneFromBearing,
+  getSignData
+} from '../lib/astro';
 
-const GOLD='#F4C842';
-const BLUE='#60A5FA';
-const NATAL='#E879F9';
-const norm=n=>((n%360)+360)%360;
-const rad=d=>d*Math.PI/180;
-const ASPECT_STYLE={
-  Conjunction:['rgba(244,200,66,.66)',[]],
-  Sextile:['rgba(94,234,212,.56)',[3,5]],
-  Square:['rgba(248,113,113,.64)',[]],
-  Trine:['rgba(96,165,250,.60)',[]],
-  Quincunx:['rgba(192,132,252,.56)',[4,5]],
-  Opposition:['rgba(251,146,60,.64)',[]]
+const GOLD = '#F4C842';
+const PALE_GOLD = '#FFE9A6';
+const BLUE = '#60A5FA';
+const NATAL = '#E879F9';
+const WHITE = '#F8FAFC';
+const norm = n => ((n % 360) + 360) % 360;
+const rad = d => d * Math.PI / 180;
+
+const ASPECT_STYLE = {
+  Conjunction: ['rgba(250,204,21,.74)', []],
+  Sextile: ['rgba(45,212,191,.66)', [3, 4]],
+  Square: ['rgba(248,113,113,.72)', []],
+  Trine: ['rgba(96,165,250,.70)', []],
+  Quincunx: ['rgba(192,132,252,.64)', [4, 4]],
+  Opposition: ['rgba(251,146,60,.72)', []]
 };
+
+const COMPASS_POINTS = [
+  ['N', 0], ['NE', 45], ['E', 90], ['SE', 135],
+  ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]
+];
+
+function shortNakshatra(name) {
+  return name
+    .replace('Purva ', 'P. ')
+    .replace('Uttara ', 'U. ')
+    .replace('Bhadrapada', 'Bhadra')
+    .replace('Phalguni', 'Phalg.')
+    .replace('Ashadha', 'Ash.')
+    .replace('Ashwini', 'Ashwini')
+    .slice(0, 10);
+}
 
 export default function ZodiacWheel({
   chart,
-  natalAsc=null,
-  planets=[],
+  natalAsc = null,
+  planets = [],
   selectedPlanet,
   onSelectPlanet,
   selectedHouse,
   onSelectHouse,
-  destinationBearing=null,
-  compact=false,
-  overlay=false,
-  radiusMeters=null,
-  distanceUnit='ft'
-}){
-  const ref=useRef(null);
-  const size=compact?620:620;
+  destinationBearing = null,
+  compact = false,
+  overlay = false,
+  radiusMeters = null,
+  distanceUnit = 'ft'
+}) {
+  const ref = useRef(null);
+  const size = 760;
 
-  useEffect(()=>{
-    const c=ref.current;
-    if(!c||!chart)return;
-    const ctx=c.getContext('2d');
-    const W=c.width,H=c.height,cx=W/2,cy=H/2;
-    const R=Math.min(W,H)/2-42;
-    ctx.clearRect(0,0,W,H);
-    const rotation=90-chart.asc; // transiting ASC remains East/right.
-    const point=(lon,r)=>{
-      const a=rad(norm(lon+rotation)-90);
-      return[cx+r*Math.cos(a),cy+r*Math.sin(a)];
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas || !chart) return;
+
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const R = Math.min(W, H) / 2 - 58;
+    const rotation = 90 - chart.asc;
+    const opacity = overlay ? 0.88 : 1;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const point = (lon, radius) => {
+      const a = rad(norm(lon + rotation) - 90);
+      return [cx + radius * Math.cos(a), cy + radius * Math.sin(a)];
     };
-    const alpha=overlay?.90:1;
 
-    // Fine compass bezel.
-    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(244,200,66,${.86*alpha})`;ctx.lineWidth=1.15;ctx.stroke();
-    ctx.beginPath();ctx.arc(cx,cy,R-9,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(244,200,66,${.20*alpha})`;ctx.lineWidth=.55;ctx.stroke();
-    for(let d=0;d<360;d+=2){
-      const major=d%30===0,mid=d%10===0;
-      const ro=R,ri=R-(major?13:mid?8:3.5),a=rad(d-90);
-      ctx.beginPath();ctx.moveTo(cx+ri*Math.cos(a),cy+ri*Math.sin(a));ctx.lineTo(cx+ro*Math.cos(a),cy+ro*Math.sin(a));
-      ctx.strokeStyle=`rgba(244,200,66,${(major?.72:mid?.44:.24)*alpha})`;ctx.lineWidth=major?1.05:.5;ctx.stroke();
+    const circle = (r, stroke, width = 1, fill = null) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    };
+
+    // Transparent navigation glass. The map remains readable below it.
+    const glass = ctx.createRadialGradient(cx, cy, R * .08, cx, cy, R);
+    glass.addColorStop(0, overlay ? 'rgba(2,6,23,.025)' : 'rgba(2,6,23,.50)');
+    glass.addColorStop(.52, overlay ? 'rgba(2,6,23,.035)' : 'rgba(2,6,23,.58)');
+    glass.addColorStop(1, overlay ? 'rgba(2,6,23,.085)' : 'rgba(2,6,23,.76)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = glass;
+    ctx.fill();
+
+    // Precision compass bezel: subtle double rim + one-degree ticks.
+    circle(R, `rgba(244,200,66,${.92 * opacity})`, 1.35);
+    circle(R - 7, `rgba(255,233,166,${.26 * opacity})`, .55);
+    circle(R - 19, `rgba(244,200,66,${.18 * opacity})`, .45);
+
+    for (let d = 0; d < 360; d += 1) {
+      const major = d % 30 === 0;
+      const ten = d % 10 === 0;
+      const five = d % 5 === 0;
+      const outer = R - 2;
+      const len = major ? 16 : ten ? 11 : five ? 7 : 3.5;
+      const inner = outer - len;
+      const a = rad(d - 90);
+      ctx.beginPath();
+      ctx.moveTo(cx + inner * Math.cos(a), cy + inner * Math.sin(a));
+      ctx.lineTo(cx + outer * Math.cos(a), cy + outer * Math.sin(a));
+      ctx.strokeStyle = major
+        ? `rgba(255,233,166,${.82 * opacity})`
+        : ten
+          ? `rgba(244,200,66,${.52 * opacity})`
+          : `rgba(244,200,66,${(five ? .30 : .16) * opacity})`;
+      ctx.lineWidth = major ? 1.2 : .45;
+      ctx.stroke();
     }
 
-    // Zodiac ring.
-    const zodiacOuter=R-15,zodiacInner=R*.835;
-    for(let i=0;i<12;i++){
-      const s=rad(i*30+rotation-90),e=rad((i+1)*30+rotation-90);
-      ctx.beginPath();ctx.arc(cx,cy,zodiacOuter,s,e);ctx.arc(cx,cy,zodiacInner,e,s,true);ctx.closePath();
-      ctx.fillStyle=overlay?(i%2?'rgba(5,8,24,.09)':'rgba(5,8,24,.025)'):(i%2?'rgba(12,16,42,.82)':'rgba(7,10,28,.82)');
-      ctx.fill();ctx.strokeStyle=`rgba(244,200,66,${.28*alpha})`;ctx.lineWidth=.6;ctx.stroke();
-      const[x,y]=point(i*30+15,(zodiacOuter+zodiacInner)/2);
-      ctx.font=compact?'15px serif':'18px serif';ctx.fillStyle=`rgba(244,200,66,${.98*alpha})`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ZODIAC_GLYPHS[i],x,y);
+    // Zodiac ring — small sign glyphs, never reused for planets.
+    const zodiacOuter = R - 23;
+    const zodiacInner = R * .855;
+    for (let i = 0; i < 12; i++) {
+      const s = rad(i * 30 + rotation - 90);
+      const e = rad((i + 1) * 30 + rotation - 90);
+      ctx.beginPath();
+      ctx.arc(cx, cy, zodiacOuter, s, e);
+      ctx.arc(cx, cy, zodiacInner, e, s, true);
+      ctx.closePath();
+      ctx.fillStyle = overlay
+        ? (i % 2 ? 'rgba(5,8,24,.035)' : 'rgba(5,8,24,.012)')
+        : (i % 2 ? 'rgba(15,23,42,.32)' : 'rgba(2,6,23,.20)');
+      ctx.fill();
+      ctx.strokeStyle = `rgba(244,200,66,${.25 * opacity})`;
+      ctx.lineWidth = .5;
+      ctx.stroke();
+
+      const [x, y] = point(i * 30 + 15, (zodiacOuter + zodiacInner) / 2);
+      ctx.font = compact ? '15px Georgia, serif' : '18px Georgia, serif';
+      ctx.fillStyle = `rgba(255,233,166,${.96 * opacity})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ZODIAC_GLYPHS[i], x, y);
     }
 
-    // Nakshatra ring.
-    const nakOuter=zodiacInner-2,nakInner=R*.665,step=360/27;
-    for(let i=0;i<27;i++){
-      const s=rad(i*step+rotation-90),e=rad((i+1)*step+rotation-90);
-      ctx.beginPath();ctx.arc(cx,cy,nakOuter,s,e);ctx.arc(cx,cy,nakInner,e,s,true);ctx.closePath();
-      ctx.fillStyle=overlay?'rgba(7,10,25,.018)':'rgba(255,255,255,.012)';ctx.fill();
-      ctx.strokeStyle=`rgba(232,237,245,${.20*alpha})`;ctx.lineWidth=.45;ctx.stroke();
-      const short=NAKSHATRAS[i].replace('Purva ','P. ').replace('Uttara ','U. ').replace('Bhadrapada','Bhadra').replace('Phalguni','Phalg.').replace('Ashadha','Ash.').slice(0,9);
-      const[x,y]=point(i*step+step/2,(nakOuter+nakInner)/2);
-      ctx.save();ctx.translate(x,y);ctx.rotate(rad(norm(i*step+step/2+rotation)));
-      ctx.font=compact?'6.5px Inter, sans-serif':'7.5px Inter, sans-serif';ctx.fillStyle=`rgba(242,245,250,${.91*alpha})`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(short,0,0);ctx.restore();
+    // Nakshatra ring — all 27 names visible.
+    const nakOuter = zodiacInner - 3;
+    const nakInner = R * .685;
+    const nakStep = 360 / 27;
+    for (let i = 0; i < 27; i++) {
+      const s = rad(i * nakStep + rotation - 90);
+      const e = rad((i + 1) * nakStep + rotation - 90);
+      ctx.beginPath();
+      ctx.arc(cx, cy, nakOuter, s, e);
+      ctx.arc(cx, cy, nakInner, e, s, true);
+      ctx.closePath();
+      ctx.fillStyle = overlay
+        ? (i % 2 ? 'rgba(255,255,255,.008)' : 'rgba(244,200,66,.007)')
+        : (i % 2 ? 'rgba(255,255,255,.014)' : 'rgba(244,200,66,.011)');
+      ctx.fill();
+      ctx.strokeStyle = `rgba(226,232,240,${.18 * opacity})`;
+      ctx.lineWidth = .42;
+      ctx.stroke();
+
+      const lon = i * nakStep + nakStep / 2;
+      const [x, y] = point(lon, (nakOuter + nakInner) / 2);
+      ctx.save();
+      ctx.translate(x, y);
+      const screen = norm(lon + rotation);
+      let textRotation = rad(screen);
+      if (screen > 90 && screen < 270) textRotation += Math.PI;
+      ctx.rotate(textRotation);
+      ctx.font = compact ? '6.8px Inter, sans-serif' : '8px Inter, sans-serif';
+      ctx.fillStyle = `rgba(241,245,249,${.84 * opacity})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(shortNakshatra(NAKSHATRAS[i]), 0, 0);
+      ctx.restore();
     }
 
-    // House ring.
-    const houseOuter=nakInner-2,houseInner=R*.49;
-    const zone=destinationZoneFromBearing(chart,Number(destinationBearing));
-    for(let h=0;h<12;h++){
-      const cusp=chart.houseCusps[h],s=rad(cusp+rotation-90),e=rad(cusp+30+rotation-90);
-      const active=selectedHouse===h+1||zone?.house===h+1;
-      ctx.beginPath();ctx.arc(cx,cy,houseOuter,s,e);ctx.arc(cx,cy,houseInner,e,s,true);ctx.closePath();
-      ctx.fillStyle=active?`rgba(244,200,66,${overlay?.08:.12})`:overlay?'rgba(8,12,30,.012)':'rgba(255,255,255,.014)';ctx.fill();
-      ctx.strokeStyle=active?`rgba(244,200,66,${.68*alpha})`:`rgba(230,237,247,${.15*alpha})`;ctx.lineWidth=active?1.05:.45;ctx.stroke();
-      const[x,y]=point(cusp+15,(houseOuter+houseInner)/2);
-      ctx.font=compact?'bold 8.5px Inter':'bold 10px Inter';ctx.fillStyle=active?GOLD:`rgba(245,248,252,${.82*alpha})`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(h+1),x,y);
+    // House / navigation ring.
+    const houseOuter = nakInner - 3;
+    const houseInner = R * .515;
+    const destinationZone = destinationZoneFromBearing(chart, Number(destinationBearing));
+
+    for (let h = 0; h < 12; h++) {
+      const cusp = chart.houseCusps[h];
+      const s = rad(cusp + rotation - 90);
+      const e = rad(cusp + 30 + rotation - 90);
+      const active = selectedHouse === h + 1 || destinationZone?.house === h + 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, houseOuter, s, e);
+      ctx.arc(cx, cy, houseInner, e, s, true);
+      ctx.closePath();
+      ctx.fillStyle = active
+        ? `rgba(244,200,66,${overlay ? .065 : .11})`
+        : overlay ? 'rgba(2,6,23,.006)' : 'rgba(255,255,255,.009)';
+      ctx.fill();
+      ctx.strokeStyle = active
+        ? `rgba(255,233,166,${.74 * opacity})`
+        : `rgba(226,232,240,${.13 * opacity})`;
+      ctx.lineWidth = active ? 1 : .42;
+      ctx.stroke();
+
+      const [x, y] = point(cusp + 15, (houseOuter + houseInner) / 2);
+      ctx.font = compact ? '600 8px Inter, sans-serif' : '700 10px Inter, sans-serif';
+      ctx.fillStyle = active ? PALE_GOLD : `rgba(248,250,252,${.76 * opacity})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(h + 1), x, y);
     }
 
-    // Very transparent center so map remains visible.
-    ctx.beginPath();ctx.arc(cx,cy,houseInner-1,0,Math.PI*2);ctx.fillStyle=overlay?'rgba(3,6,18,.015)':'rgba(6,9,26,.88)';ctx.fill();
+    // Inner aspect field.
+    circle(houseInner - 1, `rgba(244,200,66,${.12 * opacity})`, .5, overlay ? 'rgba(2,6,23,.010)' : 'rgba(2,6,23,.20)');
 
-    // Transit-to-transit aspect geometry.
-    const aspectRadius=houseInner-28,byId=new Map(planets.map(p=>[p.id,p]));
-    calculateAspects(planets).forEach(a=>{
-      const pa=byId.get(a.aId),pb=byId.get(a.bId);if(!pa||!pb)return;
-      const[x1,y1]=point(pa.siderealLon,aspectRadius),[x2,y2]=point(pb.siderealLon,aspectRadius),st=ASPECT_STYLE[a.type]||ASPECT_STYLE.Sextile;
-      ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=st[0];ctx.globalAlpha=overlay?.72:1;ctx.lineWidth=a.orb<1?1.45:.8;ctx.setLineDash(st[1]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    const aspectRadius = houseInner - 34;
+    const byId = new Map(planets.map(p => [p.id, p]));
+    calculateAspects(planets).forEach(aspect => {
+      const a = byId.get(aspect.aId);
+      const b = byId.get(aspect.bId);
+      if (!a || !b) return;
+      const [x1, y1] = point(a.siderealLon, aspectRadius);
+      const [x2, y2] = point(b.siderealLon, aspectRadius);
+      const style = ASPECT_STYLE[aspect.type] || ASPECT_STYLE.Sextile;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = style[0];
+      ctx.globalAlpha = overlay ? .70 : .92;
+      ctx.lineWidth = aspect.orb < 1 ? 1.35 : .72;
+      ctx.setLineDash(style[1]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
     });
 
-    // Planet glyphs, separated slightly when crowded.
-    const pr=houseInner-15,occupied=[];
-    planets.forEach(p=>{
-      if(!Number.isFinite(p.siderealLon))return;
-      let ring=pr;
-      const near=occupied.filter(o=>Math.abs(((o-p.siderealLon+540)%360)-180)<4.5).length;
-      ring-=near*17;occupied.push(p.siderealLon);
-      const[x,y]=point(p.siderealLon,ring),sel=selectedPlanet?.id===p.id;
-      if(sel){ctx.beginPath();ctx.arc(x,y,13,0,Math.PI*2);ctx.fillStyle='rgba(244,200,66,.16)';ctx.fill();ctx.strokeStyle='rgba(244,200,66,.85)';ctx.lineWidth=1;ctx.stroke();}
-      ctx.font=compact?(sel?'17px serif':'14.5px serif'):(sel?'20px serif':'17px serif');ctx.fillStyle=sel?'#FFF9D6':GOLD;ctx.shadowColor='rgba(0,0,0,.75)';ctx.shadowBlur=2;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.glyph,x,y);ctx.shadowBlur=0;
+    // True planet glyphs at exact sidereal longitudes. Crowded bodies step inward.
+    const planetBaseRadius = houseInner - 8;
+    const placed = [];
+    planets.forEach(p => {
+      if (!Number.isFinite(p.siderealLon)) return;
+      const closeCount = placed.filter(lon => Math.abs(((lon - p.siderealLon + 540) % 360) - 180) < 4.2).length;
+      const ring = planetBaseRadius - closeCount * 21;
+      placed.push(p.siderealLon);
+      const [x, y] = point(p.siderealLon, ring);
+      const selected = selectedPlanet?.id === p.id;
+
+      ctx.beginPath();
+      ctx.arc(x, y, selected ? 14 : 11.5, 0, Math.PI * 2);
+      ctx.fillStyle = selected
+        ? 'rgba(244,200,66,.22)'
+        : overlay ? 'rgba(3,7,18,.43)' : 'rgba(3,7,18,.72)';
+      ctx.fill();
+      ctx.strokeStyle = selected ? 'rgba(255,233,166,.95)' : 'rgba(244,200,66,.35)';
+      ctx.lineWidth = selected ? 1.1 : .55;
+      ctx.stroke();
+
+      ctx.font = selected ? '22px Georgia, serif' : '18px Georgia, serif';
+      ctx.fillStyle = selected ? '#FFFBEA' : GOLD;
+      ctx.shadowColor = 'rgba(0,0,0,.9)';
+      ctx.shadowBlur = 2;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.glyph || '•', x, y + .5);
+      ctx.shadowBlur = 0;
     });
 
-    // Cardinal directions.
-    [['N',0],['E',90],['S',180],['W',270]].forEach(([label,d])=>{
-      const a=rad(d-90),rr=R+20,x=cx+rr*Math.cos(a),y=cy+rr*Math.sin(a);
-      ctx.font=label==='E'?'bold 14px Inter':'bold 11px Inter';ctx.fillStyle=label==='E'?'#FFF7C2':GOLD;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x,y);
+    // Eight compass bearings outside the astrological rings.
+    COMPASS_POINTS.forEach(([label, bearing]) => {
+      const a = rad(bearing - 90);
+      const rr = R + (label.length === 1 ? 28 : 25);
+      const x = cx + rr * Math.cos(a);
+      const y = cy + rr * Math.sin(a);
+      const cardinal = label.length === 1;
+      ctx.font = cardinal ? '700 13px Inter, sans-serif' : '600 8px Inter, sans-serif';
+      ctx.fillStyle = label === 'E' ? '#FFF7C2' : `rgba(244,200,66,${cardinal ? .98 : .72})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y);
     });
 
-    // Transiting ASC: always East/right because wheel rotates with current ASC.
-    const transitR=houseOuter+7;
-    const[tx,ty]=point(chart.asc,transitR);
-    ctx.beginPath();ctx.arc(tx,ty,compact?5.5:6.5,0,Math.PI*2);ctx.fillStyle=BLUE;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.25;ctx.stroke();
-    if(!compact){ctx.font='bold 8.5px Inter';ctx.fillStyle='#BFDBFE';ctx.textAlign='left';ctx.fillText(`TRANSIT ASC ${getSignData(chart.asc).label}`,tx+10,ty-1);}
-
-    // Natal ASC: fixed natal zodiac degree plotted inside the current rotating transit wheel.
-    if(Number.isFinite(Number(natalAsc))){
-      const na=Number(natalAsc),[nx,ny]=point(na,transitR-19),sd=getSignData(na);
-      const angle=rad(norm(na+rotation)-90);
-      ctx.save();ctx.translate(nx,ny);ctx.rotate(angle+Math.PI/2);ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(6,6);ctx.lineTo(-6,6);ctx.closePath();ctx.fillStyle=NATAL;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=.9;ctx.stroke();ctx.restore();
-      if(!compact){ctx.font='bold 8px Inter';ctx.fillStyle='#F5D0FE';ctx.textAlign=nx>=cx?'left':'right';ctx.fillText(`NATAL ASC ${sd.label}`,nx+(nx>=cx?10:-10),ny-1);}
+    // Live / transit Ascendant. Wheel rotation locks it to East.
+    const ascRadius = houseOuter + 6;
+    const [tx, ty] = point(chart.asc, ascRadius);
+    ctx.beginPath();
+    ctx.arc(tx, ty, compact ? 5.8 : 7, 0, Math.PI * 2);
+    ctx.fillStyle = BLUE;
+    ctx.fill();
+    ctx.strokeStyle = WHITE;
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+    if (!compact) {
+      ctx.font = '700 8.5px Inter, sans-serif';
+      ctx.fillStyle = '#BFDBFE';
+      ctx.textAlign = 'left';
+      ctx.fillText(`TRANSIT ASC · ${getSignData(chart.asc).label}`, tx + 11, ty - 1);
     }
 
-    // Destination bearing marker.
-    if(zone){
-      const[dx,dy]=point(zone.longitude,houseInner-2);ctx.beginPath();ctx.arc(dx,dy,compact?5.3:6.2,0,Math.PI*2);ctx.fillStyle=GOLD;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke();
-      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(dx,dy);ctx.strokeStyle='rgba(244,200,66,.38)';ctx.lineWidth=.8;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
+    // Natal Ascendant as a separate fixed zodiac-degree marker.
+    if (Number.isFinite(Number(natalAsc))) {
+      const na = Number(natalAsc);
+      const [nx, ny] = point(na, ascRadius - 21);
+      const sd = getSignData(na);
+      const angle = rad(norm(na + rotation) - 90);
+      ctx.save();
+      ctx.translate(nx, ny);
+      ctx.rotate(angle + Math.PI / 2);
+      ctx.beginPath();
+      ctx.moveTo(0, -8);
+      ctx.lineTo(6.5, 6);
+      ctx.lineTo(-6.5, 6);
+      ctx.closePath();
+      ctx.fillStyle = NATAL;
+      ctx.fill();
+      ctx.strokeStyle = WHITE;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+      if (!compact) {
+        ctx.font = '700 8px Inter, sans-serif';
+        ctx.fillStyle = '#F5D0FE';
+        ctx.textAlign = nx >= cx ? 'left' : 'right';
+        ctx.fillText(`NATAL ASC · ${sd.label}`, nx + (nx >= cx ? 11 : -11), ny - 1);
+      }
     }
 
-    if(overlay&&Number.isFinite(radiusMeters)){
-      ctx.font='bold 9px Inter';ctx.fillStyle='rgba(255,255,255,.88)';ctx.textAlign='center';ctx.fillText(`RADIUS ${formatDistance(radiusMeters/1000,distanceUnit).toUpperCase()}`,cx,H-9);
+    // Destination marker uses the actual map bearing and destination house zone.
+    if (destinationZone) {
+      const [dx, dy] = point(destinationZone.longitude, houseInner - 3);
+      ctx.beginPath();
+      ctx.arc(dx, dy, compact ? 5.4 : 6.6, 0, Math.PI * 2);
+      ctx.fillStyle = GOLD;
+      ctx.fill();
+      ctx.strokeStyle = WHITE;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(dx, dy);
+      ctx.strokeStyle = 'rgba(244,200,66,.38)';
+      ctx.lineWidth = .8;
+      ctx.setLineDash([4, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
-  },[chart,natalAsc,planets,selectedPlanet,selectedHouse,destinationBearing,compact,overlay,radiusMeters,distanceUnit]);
 
-  const click=e=>{
-    if(!chart)return;
-    const rect=ref.current.getBoundingClientRect();
-    const x=(e.clientX-rect.left)*(ref.current.width/rect.width),y=(e.clientY-rect.top)*(ref.current.height/rect.height);
-    const cx=ref.current.width/2,cy=ref.current.height/2,R=Math.min(ref.current.width,ref.current.height)/2-42;
-    const dist=Math.hypot(x-cx,y-cy),screen=norm(Math.atan2(y-cy,x-cx)*180/Math.PI+90),lon=norm(screen-(90-chart.asc));
-    if(dist<R*.50){
-      let nearest=null,gap=999;
-      for(const p of planets){const d=Math.abs(((p.siderealLon-lon+540)%360)-180);if(d<gap){gap=d;nearest=p;}}
-      if(nearest&&gap<11){onSelectPlanet?.(nearest);return;}
+    // Minimal central locator reticle; avoids blocking streets beneath the wheel.
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.92)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(96,165,250,.70)';
+    ctx.lineWidth = .75;
+    ctx.stroke();
+
+    if (overlay && Number.isFinite(radiusMeters)) {
+      ctx.font = '700 8.5px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.88)';
+      ctx.textAlign = 'center';
+      ctx.fillText(`MAP RADIUS · ${formatDistance(radiusMeters / 1000, distanceUnit).toUpperCase()}`, cx, H - 13);
     }
-    if(dist>=R*.49&&dist<=R*.665){const h=Math.floor(norm(lon-chart.asc)/30)+1;onSelectHouse?.(h);}
+  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit]);
+
+  const handleClick = e => {
+    if (!chart) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (ref.current.width / rect.width);
+    const y = (e.clientY - rect.top) * (ref.current.height / rect.height);
+    const cx = ref.current.width / 2;
+    const cy = ref.current.height / 2;
+    const R = Math.min(ref.current.width, ref.current.height) / 2 - 58;
+    const dist = Math.hypot(x - cx, y - cy);
+    const screen = norm(Math.atan2(y - cy, x - cx) * 180 / Math.PI + 90);
+    const lon = norm(screen - (90 - chart.asc));
+
+    // Planet hit area is intentionally generous for mobile use.
+    if (dist < R * .56) {
+      let nearest = null;
+      let gap = 999;
+      for (const p of planets) {
+        const d = Math.abs(((p.siderealLon - lon + 540) % 360) - 180);
+        if (d < gap) { gap = d; nearest = p; }
+      }
+      if (nearest && gap < 10) {
+        onSelectPlanet?.(nearest);
+        return;
+      }
+    }
+
+    if (dist >= R * .515 && dist <= R * .685) {
+      const house = Math.floor(norm(lon - chart.asc) / 30) + 1;
+      onSelectHouse?.(house);
+    }
   };
 
-  return <div className={overlay?'clean-wheel overlay-wheel':'clean-wheel'}>
-    <canvas ref={ref} width={size} height={size} onClick={click} className={compact?'wheel-canvas compact':'wheel-canvas'} aria-label="Interactive sidereal compass. Blue circle is current transit Ascendant, pink triangle is natal Ascendant, gold glyphs are current transit planets. Click a planet glyph or house sector to read its forecast."/>
-    {!compact&&<div className="wheel-key"><span><i className="transit-asc-dot"/>Transit ASC</span><span><i className="natal-asc-dot"/>Natal ASC</span><span><i className="dest-dot"/>Destination zone</span><span>Click planets or houses for forecasts</span></div>}
-  </div>;
+  return (
+    <div className={overlay ? 'clean-wheel overlay-wheel compass-v31' : 'clean-wheel compass-v31'}>
+      <canvas
+        ref={ref}
+        width={size}
+        height={size}
+        onClick={handleClick}
+        className={compact ? 'wheel-canvas compact' : 'wheel-canvas'}
+        aria-label="Interactive sidereal navigation compass. Zodiac symbols are in the outer ring; gold inner glyphs are the actual transit planets. Blue circle is current transit Ascendant, pink triangle is natal Ascendant, and gold destination marker follows the real route bearing."
+      />
+      {!compact && (
+        <div className="wheel-key">
+          <span><i className="transit-asc-dot"/>Transit ASC</span>
+          <span><i className="natal-asc-dot"/>Natal ASC</span>
+          <span><i className="dest-dot"/>Destination zone</span>
+          <span>Gold inner symbols = transit planets</span>
+        </div>
+      )}
+    </div>
+  );
 }

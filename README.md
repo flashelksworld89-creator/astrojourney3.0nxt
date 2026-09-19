@@ -1,3 +1,7 @@
+# AstroWalk Journey 3.1 — Compass Design Correction
+
+This revision fixes the planet-glyph collision that caused inner transit planets to display zodiac-sign symbols. Planet glyphs are now stored separately from zodiac glyphs and rendered at exact sidereal longitudes. The compass is redesigned to match the approved map-overlay direction: finer bezel, smaller zodiac symbols, all 27 nakshatras, true planet glyphs, sidereal aspect lines, 8-direction compass labels, live Transit ASC, natal ASC with degree, real destination bearing/house zone, and high transparency over city streets.
+
 # AstroWalk Journey 3.0 — Next.js Edition
 
 This is the Next.js conversion of the AstroWalk Journey 2.6.4 codebase. It keeps the sidereal Lahiri transit compass, natal chart verification, live walking/driving GPS tracking, destination-house zoning, clickable planet/house forecasts, private keyword vocabulary, and natal/transit/route event interpretation engine.

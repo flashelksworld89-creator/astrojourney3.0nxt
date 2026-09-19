@@ -135,7 +135,7 @@ export function getSignData(lon) {
   return {
     signIndex,
     sign:ZODIAC_SIGNS[signIndex],
-    glyph:ZODIAC_GLYPHS[signIndex],
+    zodiacGlyph:ZODIAC_GLYPHS[signIndex],
     degreeDecimal:within,
     degree,
     minute,
