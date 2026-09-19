@@ -1,88 +1,20 @@
-# AstroWalk Journey 3.4 — One-Mile Nakshatra Map Scale
+# AstroWalk Journey 3.2.2 — Stable Map Rebuild
 
-# AstroWalk Journey 3.3 — Map + Compass Synchronization
+This build is intentionally rebuilt from the last stable **3.2.1** map/compass alignment code. The 3.3/3.4 projection-based wheel anchoring changes were discarded because they caused the destination/map/compass to drift out of alignment.
 
-This build adds geographic wheel resizing, smooth map/wheel synchronization, travel-direction controls, stronger aspect lines, and a canonical 1-mile nakshatra diameter (0.5-mile / 2,640-foot radius).
+## Rebuilt safely on top of 3.2.1
+- Keeps the stable centered compass/map interaction from 3.2.1.
+- Default nakshatra compass footprint is **1 mile in diameter**: 0.5-mile / 2,640-foot radius.
+- Radius controls visibly expand/contract the wheel while its center remains fixed.
+- Radius changes no longer force Google Maps to auto-zoom after initial load.
+- Nakshatra names are radial, following their pizza-slice spokes toward the center.
+- Aspect lines use a dark halo plus brighter colored stroke for visibility over city streets.
+- Fullscreen preserves the current map center/zoom and triggers multiple safe resize refreshes.
+- Fullscreen does not replace or reproject the wheel anchor.
+- Natal/transit calculations, clickable houses/planets, live GPS, prediction engine, private keywords, and natal audit remain intact.
 
-# AstroWalk Journey 3.2.1 — Compass Legibility Fix
+## Required Vercel variables
+- `GOOGLE_MAPS_API_KEY`
+- `PLANET_VOCAB_JSON`
 
-This build strengthens the approved compass design: opaque-enough navigation glass, readable nakshatra ring, explicit house cusp spokes using actual cusp-to-cusp sectors, stronger ring boundaries, and fully visible planetary glyphs over the map.
-
-# AstroWalk Journey 3.1 — Compass Design Correction
-
-This revision fixes the planet-glyph collision that caused inner transit planets to display zodiac-sign symbols. Planet glyphs are now stored separately from zodiac glyphs and rendered at exact sidereal longitudes. The compass is redesigned to match the approved map-overlay direction: finer bezel, smaller zodiac symbols, all 27 nakshatras, true planet glyphs, sidereal aspect lines, 8-direction compass labels, live Transit ASC, natal ASC with degree, real destination bearing/house zone, and high transparency over city streets.
-
-# AstroWalk Journey 3.0 — Next.js Edition
-
-This is the Next.js conversion of the AstroWalk Journey 2.6.4 codebase. It keeps the sidereal Lahiri transit compass, natal chart verification, live walking/driving GPS tracking, destination-house zoning, clickable planet/house forecasts, private keyword vocabulary, and natal/transit/route event interpretation engine.
-
-## Why this version
-
-- Uses Next.js App Router instead of Vite.
-- Deploys directly on Vercel with no Vite configuration.
-- Uses server route handlers for private interpretation and Google Maps configuration.
-- `GOOGLE_MAPS_API_KEY` does **not** need a `VITE_` or `NEXT_PUBLIC_` prefix.
-- `PLANET_VOCAB_JSON` remains server-only.
-- No `vercel.json` is required; Vercel detects Next.js automatically.
-
-## Required Vercel environment variables
-
-### `GOOGLE_MAPS_API_KEY`
-Your Google Maps JavaScript browser key. This variable is stored server-side and delivered by `/api/maps-key` only when the map loads. Because Google Maps runs in the browser, the key can still be observed at runtime. Restrict it in Google Cloud by HTTP referrer and by allowed Maps APIs.
-
-### `PLANET_VOCAB_JSON`
-Your private planet vocabulary JSON. Do not prefix this variable with `NEXT_PUBLIC_`.
-
-## Deploy to Vercel
-
-1. Create a new GitHub repository.
-2. Upload the **contents** of this folder to the repository root.
-3. Import the repository into Vercel.
-4. Framework should auto-detect as **Next.js**.
-5. Add `GOOGLE_MAPS_API_KEY` and `PLANET_VOCAB_JSON` in Vercel Environment Variables.
-6. Deploy.
-
-Do not set a custom Build Command, Output Directory, or Root Directory unless your repository is nested. Vercel's normal Next.js defaults are preferred.
-
-## Private keyword page
-
-Open:
-
-`https://YOUR-SITE.vercel.app/?admin=keywords`
-
-Paste or upload CSV with:
-
-`planet,category,term,weight`
-
-Accepted categories (singular or plural): people/person, events/event, qualities/quality, places/place, objects/object.
-
-## Local development
-
-Requires Node.js 20.9 or newer.
-
-```bash
-npm install
-npm run dev
-```
-
-Create `.env.local`:
-
-```text
-GOOGLE_MAPS_API_KEY=your_key_here
-PLANET_VOCAB_JSON={}
-```
-
-## Build
-
-```bash
-npm run build
-```
-
-The build script explicitly uses Webpack for predictable WebAssembly compatibility with `@swisseph/browser`.
-
-
-## 3.4 map/wheel changes
-- Canonical nakshatra map wheel is 1 mile in diameter (0.5 mile / 2,640 ft radius).
-- Radius changes resize the wheel at the current map zoom instead of forcing an automatic re-zoom.
-- Nakshatra names are oriented radially toward the center, with subtle pizza-slice boundary spokes.
-- Fullscreen map mode uses explicit full-viewport sizing and staged Google Maps resize refreshes.
+The header should display **v3.2.2 Stable Rebuild** after a successful deployment.
