@@ -510,3 +510,20 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
   .street-perspective-field{width:175%;height:76%}
   .street-route-label strong{font-size:28px}
 }
+
+
+/* v3.4.3 Nakshatra Street Explorer */
+.nak-explorer{position:absolute;left:10px;top:70px;bottom:84px;z-index:850;display:flex;pointer-events:none}
+.nak-explorer.open{width:min(370px,calc(100% - 20px))}.nak-explorer.collapsed{width:42px}
+.nak-collapse{pointer-events:auto;width:38px;height:44px;display:grid;place-items:center;align-self:flex-start;border:1px solid rgba(244,200,66,.5);border-radius:10px;background:rgba(4,8,18,.93);color:#ffe9a6;box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.nak-explorer-inner{pointer-events:auto;min-width:0;flex:1;margin-left:6px;background:rgba(3,7,18,.92);border:1px solid rgba(244,200,66,.32);border-radius:14px;backdrop-filter:blur(14px);box-shadow:0 12px 36px rgba(0,0,0,.34);display:flex;flex-direction:column;overflow:hidden}
+.nak-explorer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px 7px;border-bottom:1px solid rgba(255,255,255,.07)}.nak-explorer-head small,.nak-explorer-head b{display:block}.nak-explorer-head small{font-size:7px;letter-spacing:.15em;color:#9ba7ba}.nak-explorer-head b{font-size:13px;color:#fff7c2}.nak-explorer-head button{border:0;background:transparent;color:#d9e2ef;padding:6px}
+.nak-explorer-note{margin:0;padding:8px 12px;font-size:8px;line-height:1.45;color:#9aa7ba;border-bottom:1px solid rgba(255,255,255,.06)}
+.nak-explorer-error,.nak-explorer-loading{padding:10px 12px;font-size:9px;color:#f4b4b4}.nak-explorer-loading{color:#b9c5d5}
+.nak-list{overflow:auto;padding:7px;overscroll-behavior:contain}.nak-group{--nak:#f4c842;border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;margin-bottom:6px;background:rgba(255,255,255,.025)}
+.nak-group-head{width:100%;display:flex;align-items:center;gap:9px;text-align:left;border:0;background:transparent;color:#e8eef7;padding:8px 9px}.nak-group-head span:last-child{min-width:0}.nak-group-head b,.nak-group-head small{display:block}.nak-group-head b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nak-group-head small{font-size:7px;color:#8f9bb0;margin-top:2px}.nak-swatch{width:9px;height:30px;border-radius:999px;background:var(--nak);box-shadow:0 0 10px color-mix(in srgb,var(--nak) 70%,transparent)}
+.nak-roads{padding:0 7px 7px}.nak-road{display:flex;align-items:center;gap:5px;padding:5px 0;border-top:1px solid rgba(255,255,255,.055)}.nak-road-main{flex:1;min-width:0;text-align:left;border:0;background:transparent;color:#f2f5f9;padding:4px 3px}.nak-road-main b,.nak-road-main span{display:block}.nak-road-main b{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nak-road-main span{font-size:7px;color:#8f9bb0;margin-top:2px}.nak-road-actions{display:flex;gap:3px}.nak-road-actions button{width:28px;height:28px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.10);border-radius:7px;background:rgba(255,255,255,.04);color:#ffe9a6}.nak-empty{padding:8px 4px 3px;color:#7f8b9e;font-size:8px}
+.nak-explorer.local{bottom:118px}.nak-explorer.local .nak-explorer-inner{border-color:rgba(96,165,250,.34)}
+/* City mode: allow the compass blanket to occupy the entire map surface. */
+.mission-map-wrap .map-wheel-overlay:not(.street-flat):not(.street-upright),.fullscreen-map-wrap .map-wheel-overlay:not(.street-flat):not(.street-upright){width:min(var(--wheel-size,1200px),160vw)!important;max-width:none!important}
+@media(max-width:720px){.nak-explorer{left:6px;top:62px;bottom:126px}.nak-explorer.open{width:min(330px,calc(100% - 12px))}.nak-explorer-note{display:none}.nak-list{padding:5px}}

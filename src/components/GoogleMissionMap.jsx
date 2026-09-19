@@ -27,9 +27,10 @@ export default function GoogleMissionMap({
   onCityViewportChange,
   onMapPlaceSelect,
   focusLocation,
-  streetLocation
+  streetLocation,
+  highlightRoad=null
 }) {
-  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef(''),userMarkerAnimRef=useRef(0);
+  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),highlightRoadRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef(''),userMarkerAnimRef=useRef(0);
   const [error,setError]=useState('');
 
   const effectiveCenter=cityCentered&&cityCenter?cityCenter:location;
@@ -238,6 +239,18 @@ export default function GoogleMissionMap({
     panoramaRef.current.setPov({heading:0,pitch:0});
     panoramaRef.current.setVisible(true);
   },[streetLocation?.lat,streetLocation?.lng,streetLocation?.nonce]);
+
+  useEffect(()=>{
+    const maps=mapsRef.current,map=mapRef.current;
+    if(!maps||!map)return;
+    if(highlightRoadRef.current){highlightRoadRef.current.setMap(null);highlightRoadRef.current=null}
+    const path=Array.isArray(highlightRoad?.geometry)?highlightRoad.geometry:[];
+    if(path.length>1){
+      highlightRoadRef.current=new maps.Polyline({map,path,geodesic:true,strokeColor:'#FFF2A8',strokeOpacity:.95,strokeWeight:7,zIndex:22});
+      const bounds=new maps.LatLngBounds();path.forEach(pt=>bounds.extend(pt));
+      map.fitBounds(bounds,120);
+    }
+  },[highlightRoad]);
 
   return <div className="google-map-shell">{error?<div className="map-error">{error}</div>:null}<div ref={el} className="google-map"/></div>;
 }
