@@ -1,4 +1,4 @@
-# AstroWalk Journey 3.2.2 — Stable Map Rebuild
+# AstroWalk Journey 3.2.5 — Nakshatra Road Mode
 
 This build is intentionally rebuilt from the last stable **3.2.1** map/compass alignment code. The 3.3/3.4 projection-based wheel anchoring changes were discarded because they caused the destination/map/compass to drift out of alignment.
 
@@ -36,3 +36,14 @@ The header should display **v3.2.2 Stable Rebuild** after a successful deploymen
 - The current direction/camera heading highlights the nakshatra corridor the traveler is facing.
 - Flat-mode HUD shows selected planet, current travel house, planetary-line house, nakshatra/pada, zodiac degree, nakshatra degree, and follow bearing.
 - Selected planetary line is labeled directly on the flattened compass.
+
+## v3.2.5 Nakshatra Road Mode
+- Flat Street View is now an immersive travel field instead of only a tilted circular chart.
+- The traveler stands at the near origin of the astrological field.
+- Nakshatra divisions extend forward as meridian/ley-line lanes across the road.
+- House cusps expand into larger structural lanes.
+- The currently faced/traveled nakshatra becomes the highlighted corridor.
+- Following a planet creates a persistent illuminated centerline through that corridor.
+- The selected planet glyph rises above the horizon as a beacon; it represents a direction to follow, not a destination to reach.
+- The selected line itself carries the planet, nakshatra, house and degree label.
+- Upright mode remains the circular transit compass.

@@ -311,3 +311,41 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
   .flat-travel-hud{grid-template-columns:repeat(2,minmax(0,1fr));bottom:8px;left:8px;width:calc(100% - 16px);padding:7px}
   .flat-travel-hud b{font-size:9px}.flat-travel-hud .flat-hud-primary b{font-size:12px}
 }
+
+
+/* v3.2.5 immersive nakshatra road mode */
+.map-wheel-overlay.street-flat{
+  width:min(var(--wheel-size,980px),116vw)!important;
+  height:auto!important;
+  aspect-ratio:1/1!important;
+  transform:translate(-50%,-31%) perspective(1350px) rotateX(55deg) scaleX(1.28) scaleY(1.03)!important;
+  transform-origin:center 73%!important;
+  overflow:visible!important;
+}
+.map-wheel-overlay.street-flat::before{
+  background:linear-gradient(to bottom,rgba(2,6,23,.02),rgba(2,6,23,.04) 48%,rgba(2,6,23,.14))!important;
+  border-color:rgba(255,233,166,.08)!important;
+  border-radius:20%!important;
+}
+.map-wheel-overlay.street-flat::after{
+  inset:5% -10% -2%!important;
+  border-radius:24%!important;
+  background:linear-gradient(to bottom,rgba(244,200,66,.015),rgba(3,7,18,.02) 52%,rgba(3,7,18,.12))!important;
+  border-color:rgba(255,233,166,.10)!important;
+}
+.map-wheel-overlay.street-flat .wheel-canvas.compact{
+  width:100%!important;
+  max-width:none!important;
+  filter:drop-shadow(0 16px 18px rgba(0,0,0,.68))!important;
+}
+.map-wheel-overlay.street-flat .compass-overlay-label{
+  top:-14px!important;
+  letter-spacing:.20em!important;
+  background:rgba(2,6,23,.90)!important;
+}
+@media(max-width:720px){
+  .map-wheel-overlay.street-flat{
+    width:min(var(--wheel-size,800px),128vw)!important;
+    transform:translate(-50%,-26%) perspective(1120px) rotateX(54deg) scaleX(1.24) scaleY(1.00)!important;
+  }
+}

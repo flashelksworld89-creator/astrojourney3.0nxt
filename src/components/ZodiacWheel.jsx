@@ -62,6 +62,170 @@ export default function ZodiacWheel({
   const ref = useRef(null);
   const size = 760;
 
+  const drawFlatTravelField = (ctx, dims) => {
+    const {W,H,cx,cy,R,rotation,point,houseInner,nakOuter,nakInner,destinationZone,travelZone} = dims;
+    const followedPlanet = planets.find(p => p.id === followingPlanetId);
+    const horizonY = cy - R * .58;
+    const originY = cy + R * .46;
+    const roadTopHalf = R * .16;
+    const roadBottomHalf = R * .58;
+
+    // Ground veil: preserve Street View while giving the meridian field enough contrast.
+    const ground = ctx.createLinearGradient(0,horizonY,0,originY+R*.16);
+    ground.addColorStop(0,'rgba(2,6,23,.06)');
+    ground.addColorStop(.48,'rgba(2,6,23,.14)');
+    ground.addColorStop(1,'rgba(2,6,23,.28)');
+    ctx.beginPath();
+    ctx.moveTo(cx-roadTopHalf,horizonY);
+    ctx.lineTo(cx+roadTopHalf,horizonY);
+    ctx.lineTo(cx+roadBottomHalf,originY);
+    ctx.lineTo(cx-roadBottomHalf,originY);
+    ctx.closePath();
+    ctx.fillStyle=ground;ctx.fill();
+
+    // Nakshatra meridian lanes: 27 spokes are projected into a forward field.
+    // The camera-facing travel zone is brought to center so the user feels inside it.
+    const activeNak = travelZone?.nakshatra?.index ?? followedPlanet?.nakshatra?.index ?? 0;
+    const activeCenter = activeNak + .5;
+    const laneScale = R * .038;
+    for(let i=0;i<=27;i++){
+      let delta=i-activeCenter;
+      while(delta>13.5) delta-=27;
+      while(delta<-13.5) delta+=27;
+      const farX=cx+delta*laneScale;
+      const nearX=cx+delta*laneScale*4.6;
+      const isActiveEdge=i===activeNak || i===activeNak+1;
+      ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY);
+      ctx.strokeStyle=isActiveEdge?'rgba(255,233,166,.94)':'rgba(255,255,255,.22)';
+      ctx.lineWidth=isActiveEdge?2.4:.9;ctx.stroke();
+    }
+
+    // House meridians: stronger structural divisions, expanding toward the user.
+    for(let h=0;h<12;h++){
+      const cusp=chart.houseCusps[h];
+      const screen=norm(cusp+rotation);
+      let rel=((screen-90+540)%360)-180;
+      const normRel=Math.max(-1,Math.min(1,rel/100));
+      const farX=cx+normRel*R*.23;
+      const nearX=cx+normRel*R*.74;
+      ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY);
+      ctx.strokeStyle=h%3===0?'rgba(255,233,166,.78)':'rgba(248,250,252,.38)';
+      ctx.lineWidth=h%3===0?2:1.1;ctx.stroke();
+    }
+
+    // Depth cross-lines turn the field into a traversable road/grid rather than a tilted disk.
+    for(let j=1;j<=6;j++){
+      const t=j/7;
+      const y=horizonY+(originY-horizonY)*(t*t);
+      const half=roadTopHalf+(roadBottomHalf-roadTopHalf)*(t*t);
+      ctx.beginPath();ctx.moveTo(cx-half,y);ctx.lineTo(cx+half,y);
+      ctx.strokeStyle=j===5?'rgba(255,233,166,.46)':'rgba(255,255,255,.15)';
+      ctx.lineWidth=j===5?1.5:.7;ctx.stroke();
+    }
+
+    // Lane names near the traveler make the nakshatra field read like named roads.
+    for(let offset=-4; offset<=4; offset++){
+      const idx=(activeNak+offset+27)%27;
+      const delta=offset;
+      const x=cx+delta*laneScale*4.1;
+      const y=originY-R*.055-Math.abs(offset)*3;
+      ctx.save();ctx.translate(x,y);ctx.rotate(-Math.PI/2);
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.shadowColor='rgba(0,0,0,.95)';ctx.shadowBlur=3;
+      ctx.fillStyle=offset===0?'rgba(255,247,194,.98)':'rgba(248,250,252,.62)';
+      ctx.font=offset===0?'800 12px Inter, sans-serif':'700 8px Inter, sans-serif';
+      ctx.fillText(shortNakshatra(NAKSHATRAS[idx]),0,0);
+      ctx.restore();
+    }
+
+    // House numbers sit across the travel field as larger meridian-zone markers.
+    for(let h=0;h<12;h++){
+      const cusp=chart.houseCusps[h];
+      const screen=norm(cusp+rotation);
+      const rel=((screen-90+540)%360)-180;
+      if(Math.abs(rel)>100) continue;
+      const x=cx+(rel/100)*R*.66;
+      const y=originY-R*.16;
+      ctx.font='800 10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle='rgba(255,233,166,.72)';ctx.shadowColor='rgba(0,0,0,.9)';ctx.shadowBlur=3;
+      ctx.fillText(`H${h+1}`,x,y);ctx.shadowBlur=0;
+    }
+
+    // Active nakshatra corridor fill.
+    const activeDeltaLeft=(activeNak-activeCenter)*laneScale;
+    const activeDeltaRight=(activeNak+1-activeCenter)*laneScale;
+    ctx.beginPath();
+    ctx.moveTo(cx+activeDeltaLeft,horizonY);
+    ctx.lineTo(cx+activeDeltaRight,horizonY);
+    ctx.lineTo(cx+activeDeltaRight*4.6,originY);
+    ctx.lineTo(cx+activeDeltaLeft*4.6,originY);
+    ctx.closePath();
+    const corridor=ctx.createLinearGradient(0,horizonY,0,originY);
+    corridor.addColorStop(0,'rgba(244,200,66,.10)');
+    corridor.addColorStop(.55,'rgba(244,200,66,.16)');
+    corridor.addColorStop(1,'rgba(244,200,66,.06)');
+    ctx.fillStyle=corridor;ctx.fill();
+
+    // Current nakshatra + house label becomes part of the road surface.
+    const nakName=travelZone?.nakshatra?.name || followedPlanet?.nakshatra?.name || 'Nakshatra';
+    const houseNo=travelZone?.house || followedPlanet?.house || '—';
+    ctx.save();
+    ctx.translate(cx,cy+R*.12);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,.95)';ctx.shadowBlur=5;
+    ctx.fillStyle='rgba(255,247,194,.96)';ctx.font='800 18px Inter, sans-serif';
+    ctx.fillText(`${nakName} · HOUSE ${houseNo}`,0,0);
+    ctx.fillStyle='rgba(248,250,252,.82)';ctx.font='700 11px Inter, sans-serif';
+    ctx.fillText('ASTROLOGICAL TRAVEL CORRIDOR',0,24);
+    ctx.restore();
+
+    // Selected planet line is the road centerline, not a finite destination.
+    if(followedPlanet){
+      const absoluteBearing=norm(followedPlanet.siderealLon+90-chart.asc);
+      const cameraRel=((absoluteBearing-(Number(displayHeading)||0)+540)%360)-180;
+      const xShift=Math.max(-R*.28,Math.min(R*.28,(cameraRel/70)*R*.28));
+      const farX=cx+xShift*.24;
+      const nearX=cx+xShift;
+      ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY+R*.06);
+      ctx.strokeStyle='rgba(2,6,23,.92)';ctx.lineWidth=14;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY+R*.06);
+      ctx.strokeStyle='rgba(255,233,166,.98)';ctx.lineWidth=5;ctx.stroke();
+
+      // Repeating guide marks imply continuation; the user never reaches the planet.
+      for(let k=1;k<=5;k++){
+        const t=k/6;
+        const y=horizonY+(originY-horizonY)*(t*t);
+        const x=farX+(nearX-farX)*(t*t);
+        ctx.beginPath();ctx.arc(x,y,3.4,0,Math.PI*2);ctx.fillStyle='rgba(255,247,194,.92)';ctx.fill();
+      }
+
+      // Raised planet beacon above the horizon.
+      const beaconBaseY=horizonY+10;
+      const beaconTopY=horizonY-R*.25;
+      ctx.beginPath();ctx.moveTo(farX,beaconBaseY);ctx.lineTo(farX,beaconTopY);
+      ctx.strokeStyle='rgba(255,233,166,.82)';ctx.lineWidth=2.4;ctx.stroke();
+      const glow=ctx.createRadialGradient(farX,beaconTopY,2,farX,beaconTopY,34);
+      glow.addColorStop(0,'rgba(255,247,194,.42)');glow.addColorStop(1,'rgba(244,200,66,0)');
+      ctx.beginPath();ctx.arc(farX,beaconTopY,34,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+      ctx.beginPath();ctx.arc(farX,beaconTopY,19,0,Math.PI*2);ctx.fillStyle='rgba(2,6,23,.90)';ctx.fill();ctx.strokeStyle='#FFF7C2';ctx.lineWidth=2.4;ctx.stroke();
+      ctx.font='28px Georgia, serif';ctx.fillStyle='#FFF7C2';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(followedPlanet.glyph,farX,beaconTopY+1);
+      ctx.font='800 10px Inter, sans-serif';ctx.fillStyle='#FFF7C2';ctx.fillText(`${followedPlanet.name.toUpperCase()} · ${Math.round(absoluteBearing)}°`,farX,beaconTopY-32);
+
+      // Road label follows the selected planet corridor.
+      ctx.save();ctx.translate((farX+nearX)/2,(horizonY+originY)/2);
+      const ang=Math.atan2(originY-horizonY,nearX-farX);ctx.rotate(ang);
+      ctx.font='800 11px Inter, sans-serif';ctx.fillStyle='rgba(255,247,194,.95)';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.shadowColor='rgba(0,0,0,.95)';ctx.shadowBlur=4;
+      const pn=followedPlanet.nakshatra?.name||'—';
+      ctx.fillText(`${followedPlanet.glyph} ${followedPlanet.name} · ${pn} · H${followedPlanet.house} · ${followedPlanet.sign} ${followedPlanet.degree}°`,0,-7);
+      ctx.restore();
+    }
+
+    // User origin mark anchors the field.
+    ctx.beginPath();ctx.arc(cx,originY,9,0,Math.PI*2);ctx.fillStyle='#60A5FA';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2.2;ctx.stroke();
+    ctx.font='800 9px Inter, sans-serif';ctx.fillStyle='#BFDBFE';ctx.textAlign='center';ctx.fillText('YOU',cx,originY+19);
+  };
+
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas || !chart) return;
@@ -93,6 +257,14 @@ export default function ZodiacWheel({
       ctx.lineWidth = width;
       ctx.stroke();
     };
+
+    // Flat mode is a dedicated travel-field renderer, not a tilted circular chart.
+    const earlyDestinationZone = destinationZoneFromBearing(chart, Number(destinationBearing));
+    const earlyTravelZone = destinationZoneFromBearing(chart, Number(travelBearing));
+    if (flatMode) {
+      drawFlatTravelField(ctx,{W,H,cx,cy,R,rotation,point,houseInner:R*.515,nakOuter:R*.852,nakInner:R*.685,destinationZone:earlyDestinationZone,travelZone:earlyTravelZone});
+      return;
+    }
 
     // Transparent navigation glass. The map remains readable below it.
     const glass = ctx.createRadialGradient(cx, cy, R * .08, cx, cy, R);
@@ -199,35 +371,6 @@ export default function ZodiacWheel({
     const houseInner = R * .515;
     const destinationZone = destinationZoneFromBearing(chart, Number(destinationBearing));
     const travelZone = destinationZoneFromBearing(chart, Number(travelBearing));
-
-    // In immersive Flat mode, the direction the traveler is facing becomes a broad
-    // nakshatra corridor extending from the user's position toward the rim.
-    if (flatMode && travelZone?.nakshatra) {
-      const step = 360 / 27;
-      const idx = travelZone.nakshatra.index;
-      const startLon = idx * step;
-      const endLon = startLon + step;
-      const s = rad(startLon + rotation - 90);
-      const e = rad(endLon + rotation - 90);
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, nakOuter, s, e);
-      ctx.closePath();
-      const corridor = ctx.createRadialGradient(cx, cy, 0, cx, cy, nakOuter);
-      corridor.addColorStop(0, 'rgba(244,200,66,.18)');
-      corridor.addColorStop(.45, 'rgba(244,200,66,.12)');
-      corridor.addColorStop(1, 'rgba(244,200,66,.035)');
-      ctx.fillStyle = corridor;
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,233,166,.62)';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      const [sx, sy] = point(startLon, nakOuter);
-      const [ex, ey] = point(endLon, nakOuter);
-      ctx.moveTo(cx, cy); ctx.lineTo(sx, sy);
-      ctx.moveTo(cx, cy); ctx.lineTo(ex, ey);
-      ctx.stroke();
-    }
 
     for (let h = 0; h < 12; h++) {
       const cusp = chart.houseCusps[h];
