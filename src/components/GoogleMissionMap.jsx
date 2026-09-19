@@ -24,6 +24,7 @@ export default function GoogleMissionMap({
   onCityCenterChange,
   onStreetViewChange,
   onStreetPovChange,
+  onStreetRoadBearing,
   onCityViewportChange,
   onMapPlaceSelect,
   focusLocation,
@@ -155,9 +156,18 @@ export default function GoogleMissionMap({
         const publish=()=>{
           const visible=!!panorama.getVisible?.();
           const pov=panorama.getPov?.()||{};
+          const heading=Number(pov.heading)||0;
+          const links=panorama.getLinks?.()||[];
+          const norm=n=>((Number(n)%360)+360)%360;
+          const diff=(a,b)=>Math.abs(((norm(a)-norm(b)+540)%360)-180);
+          const candidate=links
+            .map(link=>({heading:Number(link.heading),description:link.description||''}))
+            .filter(link=>Number.isFinite(link.heading))
+            .sort((a,b)=>diff(a.heading,heading)-diff(b.heading,heading))[0];
           el.current?.classList.toggle('street-game-active',visible);
           onStreetViewChange?.(visible);
-          onStreetPovChange?.({heading:Number(pov.heading)||0,pitch:Number(pov.pitch)||0,zoom:Number(pov.zoom)||0});
+          onStreetPovChange?.({heading,pitch:Number(pov.pitch)||0,zoom:Number(pov.zoom)||0});
+          if(candidate) onStreetRoadBearing?.(norm(candidate.heading));
         };
         maps.event.addListener(panorama,'visible_changed',publish);
         maps.event.addListener(panorama,'pov_changed',publish);
