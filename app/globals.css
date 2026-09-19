@@ -219,3 +219,42 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
   .map-wheel-overlay{width:min(var(--wheel-size,430px),91vw)!important}
   .fullscreen-map-wrap .map-wheel-overlay{width:min(var(--wheel-size,520px),88vw,76vh)!important}
 }
+
+/* v3.2.3 Street View compass + planet follow */
+.street-compass-controls,.planet-follow-panel{
+  position:absolute;
+  z-index:720;
+  pointer-events:auto;
+  background:rgba(3,7,18,.92);
+  border:1px solid rgba(244,200,66,.45);
+  border-radius:12px;
+  color:#f8fafc;
+  backdrop-filter:blur(8px);
+  box-shadow:0 3px 14px rgba(0,0,0,.34);
+}
+.street-compass-controls{right:12px;top:58px;padding:8px 9px;min-width:150px}
+.street-compass-controls>b{display:block;font-size:9px;color:#ffe9a6;margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase}
+.street-compass-controls>div{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.street-compass-controls button,.planet-follow-panel button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 9px;color:#e5e7eb;font-size:9px}
+.street-compass-controls button.active{border-color:rgba(244,200,66,.75);background:rgba(244,200,66,.17);color:#fff7c2}
+.planet-follow-panel{left:50%;top:12px;transform:translateX(-50%);display:flex;align-items:center;gap:9px;padding:7px 9px;font-size:9px;white-space:nowrap}
+.planet-follow-panel b{color:#fff7c2;font-size:11px}.planet-follow-panel span:nth-child(2){color:#f4c842;font-weight:800;font-variant-numeric:tabular-nums}.planet-follow-panel button{padding:5px 8px}
+
+/* Upright is the standard HUD orientation. Camera heading is handled by the canvas. */
+.map-wheel-overlay.street-upright{transform:translate(-50%,-50%)!important}
+
+/* Flat is a visual ground-plane projection only. It does not alter chart math. */
+.map-wheel-overlay.street-flat{
+  transform:translate(-50%,-43%) perspective(1050px) rotateX(61deg) scaleY(.88)!important;
+  transform-origin:center 62%!important;
+  transition:width .24s ease,transform .24s ease!important;
+}
+.map-wheel-overlay.street-flat .compass-overlay-label{transform:translateX(-50%) rotateX(-61deg)!important;transform-origin:center bottom!important}
+.map-wheel-overlay.street-flat .wheel-canvas.compact{filter:drop-shadow(0 7px 8px rgba(0,0,0,.78))!important}
+
+@media(max-width:720px){
+  .street-compass-controls{right:8px;top:54px;min-width:132px}
+  .planet-follow-panel{top:8px;max-width:calc(100% - 160px);overflow:hidden;text-overflow:ellipsis}
+  .planet-follow-panel span:first-child{overflow:hidden;text-overflow:ellipsis}
+  .map-wheel-overlay.street-flat{transform:translate(-50%,-40%) perspective(900px) rotateX(60deg) scaleY(.86)!important}
+}

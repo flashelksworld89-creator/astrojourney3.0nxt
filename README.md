@@ -18,3 +18,14 @@ This build is intentionally rebuilt from the last stable **3.2.1** map/compass a
 - `PLANET_VOCAB_JSON`
 
 The header should display **v3.2.2 Stable Rebuild** after a successful deployment.
+
+
+## 3.2.3 additions
+- Built strictly on the stable 3.2.2 map-centering baseline.
+- Detects Google Street View visibility and camera heading.
+- Street View compass can toggle between Upright HUD and Flat ground-plane presentation.
+- Selecting any transit planet automatically enables Follow Planet mode.
+- Follow Planet draws a strong radial bearing line and arrow for the selected planet's astrological compass projection relative to the live Ascendant.
+- The bearing rotates relative to Street View camera heading while the user turns.
+- A visible follow panel shows planet, degree bearing, cardinal direction, and Stop control.
+- Follow Planet is an astrological compass projection; it is not presented as the physical sky direction of the astronomical body.

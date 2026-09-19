@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadGoogleMaps } from '../lib/googleMaps';
 
-export default function GoogleMissionMap({location,analysisLocation,destination,fullscreen,radiusMeters=152.4,followUser=true}) {
-  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),initialized=useRef(false);
+export default function GoogleMissionMap({
+  location,
+  analysisLocation,
+  destination,
+  fullscreen,
+  radiusMeters=152.4,
+  followUser=true,
+  onStreetViewChange,
+  onStreetPovChange
+}) {
+  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null);
   const [error,setError]=useState('');
 
   const fitScale=()=>{const map=mapRef.current,circle=scaleCircleRef.current;if(!map||!circle)return;const bounds=circle.getBounds?.();if(bounds)map.fitBounds(bounds,fullscreen?90:65)};
@@ -18,6 +27,21 @@ export default function GoogleMissionMap({location,analysisLocation,destination,
       userMarkerRef.current=new maps.Marker({position:location,map,title:'Live device position',zIndex:30,icon:{path:maps.SymbolPath.CIRCLE,scale:8,fillColor:'#2563eb',fillOpacity:1,strokeColor:'#ffffff',strokeWeight:2}});
       analysisMarkerRef.current=new maps.Marker({position:analysisLocation||location,map,title:'Astrology calculation position',zIndex:25,icon:{path:maps.SymbolPath.CIRCLE,scale:4,fillColor:'#F4C842',fillOpacity:.9,strokeColor:'#171717',strokeWeight:1}});
       if(destination){destMarkerRef.current=new maps.Marker({position:destination,map,title:'Destination'});routeRef.current=new maps.Polyline({path:[location,destination],map,geodesic:true,strokeColor:'#ffffff',strokeOpacity:.72,strokeWeight:3});}
+
+      const panorama=map.getStreetView?.();
+      panoramaRef.current=panorama||null;
+      if(panorama){
+        const publish=()=>{
+          const visible=!!panorama.getVisible?.();
+          const pov=panorama.getPov?.()||{};
+          onStreetViewChange?.(visible);
+          onStreetPovChange?.({heading:Number(pov.heading)||0,pitch:Number(pov.pitch)||0,zoom:Number(pov.zoom)||0});
+        };
+        maps.event.addListener(panorama,'visible_changed',publish);
+        maps.event.addListener(panorama,'pov_changed',publish);
+        publish();
+      }
+
       setTimeout(fitScale,40);setError('');
     }).catch(e=>!cancelled&&setError(e.message||'Google Maps failed to load.'));
     return()=>{cancelled=true};

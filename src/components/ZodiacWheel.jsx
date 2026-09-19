@@ -53,7 +53,9 @@ export default function ZodiacWheel({
   compact = false,
   overlay = false,
   radiusMeters = null,
-  distanceUnit = 'ft'
+  distanceUnit = 'ft',
+  displayHeading = 0,
+  followingPlanetId = null
 }) {
   const ref = useRef(null);
   const size = 760;
@@ -68,7 +70,8 @@ export default function ZodiacWheel({
     const cx = W / 2;
     const cy = H / 2;
     const R = Math.min(W, H) / 2 - 58;
-    const rotation = 90 - chart.asc;
+    const headingOffset = Number.isFinite(Number(displayHeading)) ? Number(displayHeading) : 0;
+    const rotation = 90 - chart.asc - headingOffset;
     const opacity = 1;
 
     ctx.clearRect(0, 0, W, H);
@@ -276,6 +279,64 @@ export default function ZodiacWheel({
       ctx.globalAlpha = 1;
     });
 
+
+    // Follow-planet navigation beam. This is a compass projection of the
+    // planet's astrological position relative to the live Ascendant; it is
+    // not a claim that the physical planet is located along the street.
+    const followedPlanet = planets.find(p => p.id === followingPlanetId);
+    if (followedPlanet && Number.isFinite(followedPlanet.siderealLon)) {
+      const absoluteBearing = norm(followedPlanet.siderealLon + 90 - chart.asc);
+      const [fx, fy] = point(followedPlanet.siderealLon, R - 13);
+      const [px, py] = point(followedPlanet.siderealLon, houseInner - 4);
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(fx, fy);
+      ctx.strokeStyle = 'rgba(2,6,23,.92)';
+      ctx.lineWidth = 10;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(fx, fy);
+      ctx.strokeStyle = 'rgba(255,233,166,.98)';
+      ctx.lineWidth = 4.2;
+      ctx.stroke();
+
+      const ang = Math.atan2(fy - cy, fx - cx);
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(ang + Math.PI / 2);
+      ctx.beginPath();
+      ctx.moveTo(0, -13);
+      ctx.lineTo(8, 7);
+      ctx.lineTo(-8, 7);
+      ctx.closePath();
+      ctx.fillStyle = '#FFF7C2';
+      ctx.fill();
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(px, py, 17, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(244,200,66,.18)';
+      ctx.fill();
+      ctx.strokeStyle = '#FFF7C2';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      if (!compact) {
+        const labels = ['N','NE','E','SE','S','SW','W','NW'];
+        const dir = labels[Math.round(absoluteBearing / 45) % 8];
+        ctx.font = '800 10px Inter, sans-serif';
+        ctx.fillStyle = '#FFF7C2';
+        ctx.textAlign = 'center';
+        ctx.fillText(`FOLLOW ${followedPlanet.glyph} ${followedPlanet.name} · ${absoluteBearing.toFixed(0)}° ${dir}`, cx, cy + 22);
+      }
+    }
+
     // True planet glyphs at exact sidereal longitudes. Crowded bodies step inward.
     const planetBaseRadius = houseInner - 8;
     const placed = [];
@@ -311,7 +372,7 @@ export default function ZodiacWheel({
     // These labels need to remain readable over a detailed street map, so each
     // gets a dark translucent badge and the cardinal directions are larger.
     COMPASS_POINTS.forEach(([label, bearing]) => {
-      const a = rad(bearing - 90);
+      const a = rad(norm(bearing - headingOffset) - 90);
       const cardinal = label.length === 1;
       const rr = R + (cardinal ? 35 : 33);
       const x = cx + rr * Math.cos(a);
@@ -425,7 +486,7 @@ export default function ZodiacWheel({
       ctx.textAlign = 'center';
       ctx.fillText(`MAP RADIUS · ${formatDistance(radiusMeters / 1000, distanceUnit).toUpperCase()}`, cx, H - 13);
     }
-  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit]);
+  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit, displayHeading, followingPlanetId]);
 
   const handleClick = e => {
     if (!chart) return;
@@ -437,7 +498,7 @@ export default function ZodiacWheel({
     const R = Math.min(ref.current.width, ref.current.height) / 2 - 58;
     const dist = Math.hypot(x - cx, y - cy);
     const screen = norm(Math.atan2(y - cy, x - cx) * 180 / Math.PI + 90);
-    const lon = norm(screen - (90 - chart.asc));
+    const lon = norm(screen - (90 - chart.asc - (Number.isFinite(Number(displayHeading)) ? Number(displayHeading) : 0)));
 
     // Planet hit area is intentionally generous for mobile use.
     if (dist < R * .56) {
