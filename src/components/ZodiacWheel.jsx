@@ -58,6 +58,9 @@ function shortNakshatra(name) {
 export default function ZodiacWheel({
   chart,
   natalAsc = null,
+  natalMc = null,
+  natalPlanets = [],
+  natalBirthBearing = null,
   planets = [],
   selectedPlanet,
   onSelectPlanet,
@@ -71,7 +74,13 @@ export default function ZodiacWheel({
   displayHeading = 0,
   followingPlanetId = null,
   flatMode = false,
-  travelBearing = null
+  travelBearing = null,
+  cityCentered = false,
+  cityCenterLabel = '',
+  userGeoBearing = null,
+  userGeoDistanceMeters = null,
+  geoRadiusMeters = null,
+  geographicHouse = null
 }) {
   const ref = useRef(null);
   const size = 760;
@@ -335,74 +344,86 @@ export default function ZodiacWheel({
       ctx.stroke();
     }
 
-    // Zodiac ring — small sign glyphs, never reused for planets.
-    const zodiacOuter = R - 23;
-    const zodiacInner = R * .855;
-    for (let i = 0; i < 12; i++) {
-      const s = rad(i * 30 + rotation - 90);
-      const e = rad((i + 1) * 30 + rotation - 90);
-      ctx.beginPath();
-      ctx.arc(cx, cy, zodiacOuter, s, e);
-      ctx.arc(cx, cy, zodiacInner, e, s, true);
-      ctx.closePath();
-      ctx.fillStyle = overlay
-        ? (i % 2 ? 'rgba(5,8,24,.20)' : 'rgba(5,8,24,.11)')
-        : (i % 2 ? 'rgba(15,23,42,.32)' : 'rgba(2,6,23,.20)');
-      ctx.fill();
-      ctx.strokeStyle = `rgba(244,200,66,${.62 * opacity})`;
-      ctx.lineWidth = .9;
-      ctx.stroke();
-
-      const [x, y] = point(i * 30 + 15, (zodiacOuter + zodiacInner) / 2);
-      ctx.font = compact ? '15px Georgia, serif' : '18px Georgia, serif';
-      ctx.fillStyle = `rgba(255,233,166,${.96 * opacity})`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(ZODIAC_GLYPHS[i], x, y);
-    }
-
-    // Nakshatra ring — all 27 names visible.
-    const nakOuter = zodiacInner - 3;
-    const nakInner = R * .685;
+    // v3.3 city-scale 3D compass hierarchy.
+    // OUTER -> INNER: 27 colored nakshatra wedges, zodiac ring, geographic/astrological
+    // house ring, live transit planets, quieter natal reference planets.
+    const nakOuter = R - 10;
+    const nakInner = 0;
     const nakStep = 360 / 27;
+
+    // 27 nakshatras as full radial color-wheel wedges. No decorative symbols are
+    // placed next to the names; the wedge itself is the visual identity.
     for (let i = 0; i < 27; i++) {
-      const s = rad(i * nakStep + rotation - 90);
-      const e = rad((i + 1) * nakStep + rotation - 90);
+      const sA = rad(i * nakStep + rotation - 90);
+      const eA = rad((i + 1) * nakStep + rotation - 90);
+      const color = NAKSHATRA_COLORS[i];
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, nakOuter);
+      grad.addColorStop(0, hexToRgba(color, overlay ? .10 : .18));
+      grad.addColorStop(.52, hexToRgba(color, overlay ? .16 : .34));
+      grad.addColorStop(1, hexToRgba(color, overlay ? .30 : .62));
+
       ctx.beginPath();
-      ctx.arc(cx, cy, nakOuter, s, e);
-      ctx.arc(cx, cy, nakInner, e, s, true);
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, nakOuter, sA, eA);
       ctx.closePath();
-      ctx.fillStyle = overlay
-        ? (i % 2 ? 'rgba(15,23,42,.30)' : 'rgba(68,52,16,.20)')
-        : (i % 2 ? 'rgba(255,255,255,.014)' : 'rgba(244,200,66,.011)');
+      ctx.fillStyle = grad;
       ctx.fill();
-      ctx.strokeStyle = `rgba(255,233,166,${.48 * opacity})`;
-      ctx.lineWidth = .8;
+      ctx.strokeStyle = overlay ? 'rgba(255,255,255,.34)' : 'rgba(255,255,255,.70)';
+      ctx.lineWidth = overlay ? .65 : .9;
       ctx.stroke();
 
       const lon = i * nakStep + nakStep / 2;
-      const [x, y] = point(lon, (nakOuter + nakInner) / 2);
+      const [x, y] = point(lon, R * .842);
       ctx.save();
       ctx.translate(x, y);
       const screen = norm(lon + rotation);
-      // Radial text: each nakshatra name follows its pizza-slice spoke toward the center.
       let textRotation = rad(screen - 90);
       if (screen > 180) textRotation += Math.PI;
       ctx.rotate(textRotation);
-      ctx.font = compact ? '700 8px Inter, sans-serif' : '700 9.5px Inter, sans-serif';
-      ctx.fillStyle = `rgba(255,255,255,${.98 * opacity})`;
+      ctx.font = compact ? '800 8px Inter, sans-serif' : '800 10px Inter, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
       ctx.shadowColor = 'rgba(0,0,0,.95)';
-      ctx.shadowBlur = 3;
+      ctx.shadowBlur = 4;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(shortNakshatra(NAKSHATRAS[i]), 0, 0);
-      ctx.shadowBlur = 0;
       ctx.restore();
     }
 
-    // House / navigation ring.
-    const houseOuter = nakInner - 3;
-    const houseInner = R * .515;
+    // Zodiac signs live on their own clean inner ring and remain mathematically
+    // aligned to the same sidereal longitude system as the planets.
+    const zodiacOuter = R * .78;
+    const zodiacInner = R * .665;
+    for (let i = 0; i < 12; i++) {
+      const sA = rad(i * 30 + rotation - 90);
+      const eA = rad((i + 1) * 30 + rotation - 90);
+      ctx.beginPath();
+      ctx.arc(cx, cy, zodiacOuter, sA, eA);
+      ctx.arc(cx, cy, zodiacInner, eA, sA, true);
+      ctx.closePath();
+      ctx.fillStyle = overlay
+        ? (i % 2 ? 'rgba(2,6,23,.055)' : 'rgba(15,23,42,.035)')
+        : (i % 2 ? 'rgba(5,10,30,.42)' : 'rgba(12,18,40,.34)');
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,233,166,.60)';
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      const [x, y] = point(i * 30 + 15, (zodiacOuter + zodiacInner) / 2);
+      ctx.font = compact ? '20px Georgia, serif' : '26px Georgia, serif';
+      ctx.fillStyle = 'rgba(248,250,252,.96)';
+      ctx.shadowColor = 'rgba(0,0,0,.95)';
+      ctx.shadowBlur = 4;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ZODIAC_GLYPHS[i], x, y);
+      ctx.shadowBlur = 0;
+    }
+
+    // House ring uses the actual calculated cusps. Numbers sit in the center of
+    // each cusp-to-cusp sector, so they remain aligned even when houses are unequal.
+    const houseOuter = R * .64;
+    const houseInner = R * .47;
     const destinationZone = destinationZoneFromBearing(chart, Number(destinationBearing));
     const travelZone = destinationZoneFromBearing(chart, Number(travelBearing));
 
@@ -411,32 +432,35 @@ export default function ZodiacWheel({
       let nextCusp = chart.houseCusps[(h + 1) % 12];
       if (nextCusp <= cusp) nextCusp += 360;
       const span = nextCusp - cusp;
-      const s = rad(cusp + rotation - 90);
-      const e = rad(nextCusp + rotation - 90);
-      const active = selectedHouse === h + 1 || destinationZone?.house === h + 1;
+      const sA = rad(cusp + rotation - 90);
+      const eA = rad(nextCusp + rotation - 90);
+      const geoActive = cityCentered && geographicHouse === h + 1;
+      const active = selectedHouse === h + 1 || destinationZone?.house === h + 1 || geoActive;
+
       ctx.beginPath();
-      ctx.arc(cx, cy, houseOuter, s, e);
-      ctx.arc(cx, cy, houseInner, e, s, true);
+      ctx.arc(cx, cy, houseOuter, sA, eA);
+      ctx.arc(cx, cy, houseInner, eA, sA, true);
       ctx.closePath();
-      ctx.fillStyle = active
-        ? `rgba(244,200,66,${overlay ? .16 : .14})`
-        : overlay ? 'rgba(2,6,23,.18)' : 'rgba(255,255,255,.012)';
+      ctx.fillStyle = geoActive
+        ? 'rgba(37,99,235,.22)'
+        : active ? 'rgba(244,200,66,.12)' : (overlay ? 'rgba(2,6,23,.055)' : 'rgba(2,6,23,.24)');
       ctx.fill();
-      ctx.strokeStyle = active
-        ? `rgba(255,233,166,${.96 * opacity})`
-        : `rgba(255,255,255,${.44 * opacity})`;
+      ctx.strokeStyle = geoActive ? 'rgba(147,197,253,.96)' : active ? 'rgba(255,233,166,.96)' : 'rgba(255,255,255,.48)';
       ctx.lineWidth = active ? 1.8 : 1.0;
       ctx.stroke();
 
       const [x, y] = point(cusp + span / 2, (houseOuter + houseInner) / 2);
-      ctx.font = compact ? '800 10px Inter, sans-serif' : '800 12px Inter, sans-serif';
-      ctx.fillStyle = active ? PALE_GOLD : `rgba(248,250,252,${.76 * opacity})`;
+      ctx.font = compact ? '800 11px Inter, sans-serif' : '800 14px Inter, sans-serif';
+      ctx.fillStyle = geoActive ? '#BFDBFE' : active ? '#FFF7C2' : '#F8FAFC';
+      ctx.shadowColor = 'rgba(0,0,0,.95)';
+      ctx.shadowBlur = 3;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(h + 1), x, y);
+      ctx.shadowBlur = 0;
     }
 
-    // Explicit house cusp spokes: these are intentionally stronger than the map beneath.
+    // Strong cusp spokes keep house numbers and zodiac glyphs visually registered.
     for (let h = 0; h < 12; h++) {
       const cusp = chart.houseCusps[h];
       const [x1, y1] = point(cusp, houseInner);
@@ -445,15 +469,16 @@ export default function ZodiacWheel({
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
-      ctx.strokeStyle = angular ? 'rgba(255,233,166,.96)' : 'rgba(248,250,252,.64)';
-      ctx.lineWidth = angular ? 2.0 : 1.25;
+      ctx.strokeStyle = angular ? 'rgba(255,233,166,.96)' : 'rgba(248,250,252,.58)';
+      ctx.lineWidth = angular ? 2.1 : 1.1;
       ctx.stroke();
     }
 
-    circle(houseOuter, 'rgba(255,233,166,.72)', 1.1);
+    circle(nakOuter, 'rgba(255,233,166,.92)', 1.7);
+    circle(zodiacOuter, 'rgba(255,233,166,.58)', .9);
+    circle(zodiacInner, 'rgba(255,233,166,.68)', 1.0);
+    circle(houseOuter, 'rgba(255,233,166,.70)', 1.0);
     circle(houseInner, 'rgba(255,233,166,.72)', 1.1);
-    circle(nakOuter, 'rgba(255,233,166,.58)', .9);
-    circle(nakInner, 'rgba(255,233,166,.58)', .9);
 
     // Inner aspect field.
     circle(houseInner - 1, `rgba(244,200,66,${.36 * opacity})`, .8, overlay ? 'rgba(2,6,23,.08)' : 'rgba(2,6,23,.20)');
@@ -576,7 +601,7 @@ export default function ZodiacWheel({
     }
 
     // True planet glyphs at exact sidereal longitudes. Crowded bodies step inward.
-    const planetBaseRadius = houseInner - 8;
+    const planetBaseRadius = houseInner - 5;
     const placed = [];
     planets.forEach(p => {
       if (!Number.isFinite(p.siderealLon)) return;
@@ -605,6 +630,35 @@ export default function ZodiacWheel({
       ctx.fillText(p.glyph || '•', x, y + .5);
       ctx.shadowBlur = 0;
     });
+
+    // Natal planets: smaller, quieter reference glyphs on a neighboring ring.
+    // They are intentionally subordinate to the brighter live transit planets.
+    if (Array.isArray(natalPlanets) && natalPlanets.length) {
+      const natalRadius = Math.max(54, houseInner - 54);
+      const natalPlaced = [];
+      natalPlanets.forEach(p => {
+        if (!Number.isFinite(Number(p.siderealLon))) return;
+        const closeCount = natalPlaced.filter(lon => Math.abs(((lon - p.siderealLon + 540) % 360) - 180) < 4.5).length;
+        const ring = natalRadius - closeCount * 15;
+        natalPlaced.push(Number(p.siderealLon));
+        const [x, y] = point(Number(p.siderealLon), ring);
+        ctx.beginPath();
+        ctx.arc(x, y, compact ? 7.5 : 9, 0, Math.PI * 2);
+        ctx.fillStyle = overlay ? 'rgba(30,14,48,.48)' : 'rgba(30,14,48,.72)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(232,121,249,.62)';
+        ctx.lineWidth = .8;
+        ctx.stroke();
+        ctx.font = compact ? '13px Georgia, serif' : '15px Georgia, serif';
+        ctx.fillStyle = 'rgba(245,208,254,.90)';
+        ctx.shadowColor = 'rgba(0,0,0,.95)';
+        ctx.shadowBlur = 3;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.glyph || '•', x, y + .5);
+        ctx.shadowBlur = 0;
+      });
+    }
 
     // Eight compass bearings outside the astrological rings.
     // These labels need to remain readable over a detailed street map, so each
@@ -659,32 +713,59 @@ export default function ZodiacWheel({
       ctx.fillText(`TRANSIT ASC · ${getSignData(chart.asc).label}`, tx + 11, ty - 1);
     }
 
-    // Natal Ascendant as a separate fixed zodiac-degree marker.
+    // Natal chart angles are subtle outer-rim references. They do not change
+    // the transit wheel; they show the traveler where the natal axes intersect it.
     if (Number.isFinite(Number(natalAsc))) {
       const na = Number(natalAsc);
-      const [nx, ny] = point(na, ascRadius - 21);
-      const sd = getSignData(na);
-      const angle = rad(norm(na + rotation) - 90);
-      ctx.save();
-      ctx.translate(nx, ny);
-      ctx.rotate(angle + Math.PI / 2);
+      const natalAngles = [
+        ['ASC', na],
+        ['DSC', norm(na + 180)],
+        ['MC', Number.isFinite(Number(natalMc)) ? Number(natalMc) : norm(na + 90)],
+        ['IC', Number.isFinite(Number(natalMc)) ? norm(Number(natalMc) + 180) : norm(na + 270)]
+      ];
+      natalAngles.forEach(([label, lon]) => {
+        const [ax, ay] = point(lon, R + 3);
+        const [ix, iy] = point(lon, R - 18);
+        ctx.beginPath();
+        ctx.moveTo(ix, iy);
+        ctx.lineTo(ax, ay);
+        ctx.strokeStyle = 'rgba(255,233,166,.78)';
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(ax, ay, compact ? 10 : 12, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(20,14,28,.88)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,233,166,.95)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.font = compact ? '800 7px Inter, sans-serif' : '800 8px Inter, sans-serif';
+        ctx.fillStyle = '#FFF7C2';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, ax, ay + .3);
+      });
+    }
+
+    // Optional natal birthplace direction marker. This is geographic, not a
+    // planet or chart point, so it is kept just outside the rim in violet.
+    if (Number.isFinite(Number(natalBirthBearing))) {
+      const a = rad(norm(Number(natalBirthBearing) - headingOffset) - 90);
+      const rr = R + 22;
+      const bx = cx + rr * Math.cos(a);
+      const by = cy + rr * Math.sin(a);
       ctx.beginPath();
-      ctx.moveTo(0, -8);
-      ctx.lineTo(6.5, 6);
-      ctx.lineTo(-6.5, 6);
-      ctx.closePath();
-      ctx.fillStyle = NATAL;
+      ctx.arc(bx, by, compact ? 7 : 9, 0, Math.PI * 2);
+      ctx.fillStyle = '#A855F7';
       ctx.fill();
-      ctx.strokeStyle = WHITE;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#F5D0FE';
+      ctx.lineWidth = 1.4;
       ctx.stroke();
-      ctx.restore();
-      if (!compact) {
-        ctx.font = '700 8px Inter, sans-serif';
-        ctx.fillStyle = '#F5D0FE';
-        ctx.textAlign = nx >= cx ? 'left' : 'right';
-        ctx.fillText(`NATAL ASC · ${sd.label}`, nx + (nx >= cx ? 11 : -11), ny - 1);
-      }
+      ctx.font = compact ? '700 7px Inter, sans-serif' : '800 8px Inter, sans-serif';
+      ctx.fillStyle = '#F5D0FE';
+      ctx.textAlign = bx >= cx ? 'left' : 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('NATAL BIRTHPLACE', bx + (bx >= cx ? 11 : -11), by);
     }
 
     // Destination marker uses the actual map bearing and destination house zone.
@@ -707,16 +788,59 @@ export default function ZodiacWheel({
       ctx.setLineDash([]);
     }
 
-    // Minimal central locator reticle; avoids blocking streets beneath the wheel.
+    // Geographic city-center projection. The wheel center represents the resolved
+    // geographic center of the current city; the user's dot moves according to
+    // true bearing and distance from that center.
+    if (cityCentered && Number.isFinite(Number(userGeoBearing)) && Number.isFinite(Number(userGeoDistanceMeters)) && Number.isFinite(Number(geoRadiusMeters))) {
+      const ratio = Math.max(0, Math.min(.94, Number(userGeoDistanceMeters) / Math.max(1, Number(geoRadiusMeters))));
+      const rr = ratio * (R - 20);
+      const a = rad(norm(Number(userGeoBearing) - headingOffset) - 90);
+      const ux = cx + rr * Math.cos(a);
+      const uy = cy + rr * Math.sin(a);
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(ux, uy);
+      ctx.strokeStyle = 'rgba(96,165,250,.42)';
+      ctx.lineWidth = 1.3;
+      ctx.setLineDash([4,5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath();
+      ctx.arc(ux, uy, compact ? 7 : 9, 0, Math.PI * 2);
+      ctx.fillStyle = '#2563EB';
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      ctx.font = compact ? '800 8px Inter, sans-serif' : '800 10px Inter, sans-serif';
+      ctx.fillStyle = '#DBEAFE';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.shadowColor = 'rgba(0,0,0,.95)';
+      ctx.shadowBlur = 3;
+      ctx.fillText(`YOU · H${geographicHouse || '—'}`, ux, uy - 12);
+      ctx.shadowBlur = 0;
+    }
+
+    // The center reticle is now the geographic city center, not the user's position.
     ctx.beginPath();
-    ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,.92)';
+    ctx.arc(cx, cy, 5.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(244,200,66,.96)';
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx, cy, 9, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(96,165,250,.70)';
-    ctx.lineWidth = .75;
+    ctx.arc(cx, cy, 10.5, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,233,166,.86)';
+    ctx.lineWidth = 1.0;
     ctx.stroke();
+    if (cityCentered) {
+      ctx.font = compact ? '800 7px Inter, sans-serif' : '800 9px Inter, sans-serif';
+      ctx.fillStyle = '#FFE9A6';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(cityCenterLabel ? `CITY CENTER · ${String(cityCenterLabel).toUpperCase()}` : 'CITY CENTER', cx, cy + 13);
+    }
 
     if (overlay && Number.isFinite(radiusMeters)) {
       ctx.font = '700 8.5px Inter, sans-serif';
@@ -724,7 +848,7 @@ export default function ZodiacWheel({
       ctx.textAlign = 'center';
       ctx.fillText(`MAP RADIUS · ${formatDistance(radiusMeters / 1000, distanceUnit).toUpperCase()}`, cx, H - 13);
     }
-  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit, displayHeading, followingPlanetId, flatMode, travelBearing]);
+  }, [chart, natalAsc, natalMc, natalPlanets, natalBirthBearing, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit, displayHeading, followingPlanetId, flatMode, travelBearing, cityCentered, cityCenterLabel, userGeoBearing, userGeoDistanceMeters, geoRadiusMeters, geographicHouse]);
 
   const handleClick = e => {
     if (!chart) return;
@@ -752,7 +876,7 @@ export default function ZodiacWheel({
       }
     }
 
-    if (dist >= R * .515 && dist <= R * .685) {
+    if (dist >= R * .435 && dist <= R * .585) {
       const house = Math.floor(norm(lon - chart.asc) / 30) + 1;
       onSelectHouse?.(house);
     }
@@ -766,14 +890,14 @@ export default function ZodiacWheel({
         height={size}
         onClick={handleClick}
         className={compact ? 'wheel-canvas compact' : 'wheel-canvas'}
-        aria-label="Interactive sidereal navigation compass. Zodiac symbols are in the outer ring; gold inner glyphs are the actual transit planets. Blue circle is current transit Ascendant, pink triangle is natal Ascendant, and gold destination marker follows the real route bearing."
+        aria-label="Interactive city-scale sidereal navigation compass. Twenty-seven colored nakshatra wedges blanket the city from its geographic center to the outer city rim; zodiac signs and calculated houses are aligned above the field, bright glyphs show live transit planets, smaller violet glyphs show natal planets, and outer-rim markers show natal ASC, DSC, MC and IC."
       />
       {!compact && (
         <div className="wheel-key">
           <span><i className="transit-asc-dot"/>Transit ASC</span>
-          <span><i className="natal-asc-dot"/>Natal ASC</span>
+          <span><i className="natal-asc-dot"/>Natal ASC / DSC / MC / IC</span>
           <span><i className="dest-dot"/>Destination zone</span>
-          <span>Gold inner symbols = transit planets</span>
+          <span>Bright glyphs = transits · Violet glyphs = natal planets</span>
         </div>
       )}
     </div>

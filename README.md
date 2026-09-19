@@ -1,57 +1,28 @@
-# AstroWalk Journey 3.2.5 — Nakshatra Road Mode
+# AstroWalk Journey 3.3.0 — 3D City Compass
 
-This build is intentionally rebuilt from the last stable **3.2.1** map/compass alignment code. The 3.3/3.4 projection-based wheel anchoring changes were discarded because they caused the destination/map/compass to drift out of alignment.
+This build redesigns the city-centered sidereal compass to match the approved 3D rendering direction.
 
-## Rebuilt safely on top of 3.2.1
-- Keeps the stable centered compass/map interaction from 3.2.1.
-- Default nakshatra compass footprint is **1 mile in diameter**: 0.5-mile / 2,640-foot radius.
-- Radius controls visibly expand/contract the wheel while its center remains fixed.
-- Radius changes no longer force Google Maps to auto-zoom after initial load.
-- Nakshatra names are radial, following their pizza-slice spokes toward the center.
-- Aspect lines use a dark halo plus brighter colored stroke for visibility over city streets.
-- Fullscreen preserves the current map center/zoom and triggers multiple safe resize refreshes.
-- Fullscreen does not replace or reproject the wheel anchor.
-- Natal/transit calculations, clickable houses/planets, live GPS, prediction engine, private keywords, and natal audit remain intact.
+## Compass design
+- 27 nakshatras rendered as full radial color-wheel wedges from city center to the city-scale outer rim.
+- Nakshatra labels have no decorative symbols.
+- Zodiac signs occupy a separate aligned inner ring.
+- House numbers use the actual calculated cusp-to-cusp sectors.
+- Live transit planet glyphs use their computed sidereal longitudes.
+- Natal planet glyphs appear as smaller violet reference markers so current transits remain visually dominant.
+- Natal ASC, DSC, MC and IC are neat outer-rim reference markers.
+- Optional natal birthplace direction is shown just outside the rim in violet.
+- The geographic user marker is projected from city center using real bearing and distance.
 
-## Required Vercel variables
-- `GOOGLE_MAPS_API_KEY`
-- `PLANET_VOCAB_JSON`
+## Las Vegas city-scale reference
+When the resolved city is Las Vegas, the map wheel uses a minimum radius of 13.8 miles (22,209.9 m), corresponding to the broader Las Vegas Valley reference used during design. This gives an equivalent diameter of about 27.6 miles and circumference of about 86.8 miles.
 
-The header should display **v3.2.2 Stable Rebuild** after a successful deployment.
-
-
-## 3.2.3 additions
-- Built strictly on the stable 3.2.2 map-centering baseline.
-- Detects Google Street View visibility and camera heading.
-- Street View compass can toggle between Upright HUD and Flat ground-plane presentation.
-- Selecting any transit planet automatically enables Follow Planet mode.
-- Follow Planet draws a strong radial bearing line and arrow for the selected planet's astrological compass projection relative to the live Ascendant.
-- The bearing rotates relative to Street View camera heading while the user turns.
-- A visible follow panel shows planet, degree bearing, cardinal direction, and Stop control.
-- Follow Planet is an astrological compass projection; it is not presented as the physical sky direction of the astronomical body.
+## Preserved functionality
+The Swiss Ephemeris sidereal calculation engine, Street View Flat/Upright mode, live GPS logic, planet-follow mode, private vocabulary, and prediction engine remain intact.
 
 
-## 3.2.4 additions
-- Flat Street View is widened into an immersive astrological travel field without changing the stable map anchor.
-- The current direction/camera heading highlights the nakshatra corridor the traveler is facing.
-- Flat-mode HUD shows selected planet, current travel house, planetary-line house, nakshatra/pada, zodiac degree, nakshatra degree, and follow bearing.
-- Selected planetary line is labeled directly on the flattened compass.
-
-## v3.2.5 Nakshatra Road Mode
-- Flat Street View is now an immersive travel field instead of only a tilted circular chart.
-- The traveler stands at the near origin of the astrological field.
-- Nakshatra divisions extend forward as meridian/ley-line lanes across the road.
-- House cusps expand into larger structural lanes.
-- The currently faced/traveled nakshatra becomes the highlighted corridor.
-- Following a planet creates a persistent illuminated centerline through that corridor.
-- The selected planet glyph rises above the horizon as a beacon; it represents a direction to follow, not a destination to reach.
-- The selected line itself carries the planet, nakshatra, house and degree label.
-- Upright mode remains the circular transit compass.
-
-## 3.2.6 — Live Nakshatra Field Mode
-- Flat mode now renders a 27-color nakshatra environment around the traveler.
-- The camera/travel bearing determines the active nakshatra field in real time.
-- GPS-driven chart recalculation updates the active field as the traveler moves.
-- The active nakshatra corridor is brighter and more saturated than adjacent lanes.
-- The HUD separates Current Nakshatra Field from Selected Planet Nakshatra.
-- The selected planet remains a raised beacon and its road line stays visible through the live field.
+## v3.3.1 City Blanket Compass
+- The 27 nakshatra wedges now extend from geographic city center to the full city/metro rim instead of occupying only a decorative outer band.
+- The on-screen wheel diameter is calculated from the same geographic radius used by Google Maps, so the rendered wheel blankets the mapped city footprint.
+- Las Vegas retains the 13.8-mile minimum valley-scale radius reference.
+- Dark integrated map styling matches the approved visual direction more closely while preserving street visibility.
+- Zodiac, house, transit, natal and angle layers remain aligned above the city-wide nakshatra field.

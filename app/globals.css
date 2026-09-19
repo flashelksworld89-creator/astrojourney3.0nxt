@@ -349,3 +349,16 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
     transform:translate(-50%,-26%) perspective(1120px) rotateX(54deg) scaleX(1.24) scaleY(1.00)!important;
   }
 }
+
+/* v3.2.7 city-centered geography */
+.city-center-hud{
+  position:absolute;z-index:675;left:12px;top:12px;display:grid;gap:3px;
+  max-width:min(310px,calc(100% - 24px));padding:8px 10px;border-radius:11px;
+  background:rgba(2,6,23,.86);border:1px solid rgba(96,165,250,.32);backdrop-filter:blur(8px);
+  box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none
+}
+.city-center-hud small{font-size:7px;letter-spacing:.10em;text-transform:uppercase;color:#94a3b8}
+.city-center-hud b{font-size:11px;color:#ffe9a6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.city-center-hud span{font-size:9px;color:#bfdbfe}
+@media(max-width:720px){.city-center-hud{top:8px;left:8px;max-width:230px;padding:7px 8px}.city-center-hud span{font-size:8px}}
+\n\n/* v3.3.1 city blanket compass — geographic circle and overlay are the same size */\n.map-wheel-overlay{\n  max-width:none!important;\n  max-height:none!important;\n  background:transparent!important;\n}\n.map-wheel-overlay::before{\n  inset:0!important;\n  border-radius:50%!important;\n  border:1px solid rgba(255,233,166,.20)!important;\n  background:radial-gradient(circle,rgba(3,7,18,.015) 0 46%,rgba(3,7,18,.035) 72%,rgba(3,7,18,.08) 100%)!important;\n  box-shadow:inset 0 0 28px rgba(244,200,66,.06),0 0 18px rgba(0,0,0,.18)!important;\n}\n.map-wheel-overlay .wheel-canvas.compact{\n  opacity:.98!important;\n  filter:drop-shadow(0 2px 2px rgba(0,0,0,.72)) drop-shadow(0 0 7px rgba(244,200,66,.08))!important;\n}\n.compass-overlay-label{\n  background:rgba(4,8,18,.76)!important;\n  border-color:rgba(255,233,166,.30)!important;\n  backdrop-filter:blur(5px)!important;\n}\n

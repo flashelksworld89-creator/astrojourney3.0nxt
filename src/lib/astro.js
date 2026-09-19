@@ -294,6 +294,21 @@ export function calculateTransitHouseAspects(transitPlanets=[],houseCusps=[],def
   return result;
 }
 
+
+export function geographicHouseFromBearing(bearing) {
+  if (!Number.isFinite(Number(bearing))) return null;
+  // Geographic house wheel uses the same cusp convention as the displayed wheel: East begins H1, South begins H4, West begins H7, North begins H10.
+  return Math.floor(norm(Number(bearing) - 90) / 30) + 1;
+}
+
+export function geographicNakshatraFromBearing(bearing) {
+  if (!Number.isFinite(Number(bearing))) return null;
+  const step = 360 / 27;
+  // Ashwini is centered on geographic North; the remaining 26 sectors proceed clockwise.
+  const index = Math.floor(norm(Number(bearing) + step / 2) / step) % 27;
+  return { index, name: NAKSHATRAS[index], colorIndex: index };
+}
+
 export function destinationZoneFromBearing(chart,bearing){
   if(!chart || !Number.isFinite(bearing)) return null;
   const longitude=norm(chart.asc + bearing - 90);
