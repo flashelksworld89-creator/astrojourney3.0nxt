@@ -26,3 +26,10 @@ The Swiss Ephemeris sidereal calculation engine, Street View Flat/Upright mode, 
 - Las Vegas retains the 13.8-mile minimum valley-scale radius reference.
 - Dark integrated map styling matches the approved visual direction more closely while preserving street visibility.
 - Zodiac, house, transit, natal and angle layers remain aligned above the city-wide nakshatra field.
+
+
+## v3.3.2 Deployment Repair
+- Rewrites malformed literal `\n` sequences in `app/globals.css` as real line breaks.
+- Preserves the full-city 27-wedge nakshatra blanket introduced in v3.3.1.
+- Preserves dark city-map styling, city-radius screen scaling, transit/natal layers, and geographic user projection.
+- Source files were syntax-parsed after repair.
