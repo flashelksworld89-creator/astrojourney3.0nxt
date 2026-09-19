@@ -1,4 +1,5 @@
-const NAKSHATRA_REACH_METERS = 4.4 * 1609.344;
+const NAKSHATRA_DIAMETER_METERS = 1 * 1609.344;
+const NAKSHATRA_RADIUS_METERS = NAKSHATRA_DIAMETER_METERS / 2;
 
 const UNITS = {
   ft: { label:'Feet', toMeters:v=>v*0.3048, fromMeters:m=>m/0.3048, min:100, max:30000, step:50 },
@@ -13,8 +14,8 @@ const PRESETS = [
   {label:'500 ft', meters:152.4},
   {label:'1,000 ft', meters:304.8},
   {label:'2,500 ft', meters:762},
-  {label:'1 mi', meters:1609.344},
-  {label:'Nakshatra · 4.4 mi', meters:NAKSHATRA_REACH_METERS, primary:true}
+  {label:'Nakshatra · 1 mi Ø', meters:NAKSHATRA_RADIUS_METERS, primary:true},
+  {label:'1 mi radius', meters:1609.344}
 ];
 
 function pretty(value, unit) {
@@ -26,7 +27,7 @@ export default function MapScaleControls({radiusMeters, unit, onUnitChange, onRa
   const cfg=UNITS[unit]||UNITS.ft;
   const raw=cfg.fromMeters(radiusMeters);
   const value=Math.min(cfg.max,Math.max(cfg.min,raw));
-  const atNakshatra=Math.abs(radiusMeters-NAKSHATRA_REACH_METERS)<5;
+  const atNakshatra=Math.abs(radiusMeters-NAKSHATRA_RADIUS_METERS)<5;
 
   const setDisplayValue=(next)=>{
     const parsed=Number(next);
@@ -49,7 +50,7 @@ export default function MapScaleControls({radiusMeters, unit, onUnitChange, onRa
       <div className="scale-presets">
         {PRESETS.map(p=><button type="button" className={p.primary&&atNakshatra?'active':''} key={p.label} onClick={()=>onRadiusChange(p.meters)}>{p.label}</button>)}
       </div>
-      <div className="scale-note"><b>Canonical nakshatra reach:</b> 4.4 mi = 23,232 ft from the user to the outer rim. Walking presets shrink the same compass without changing the astrology.</div>
+      <div className="scale-note"><b>Canonical nakshatra map scale:</b> 1 mile in diameter = 0.5 mile / 2,640 ft from the user to the rim. Changing distance expands or contracts the same 27-slice compass without changing the astrology.</div>
     </div>
   );
 }

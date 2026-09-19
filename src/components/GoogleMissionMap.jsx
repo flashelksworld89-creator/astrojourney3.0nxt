@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadGoogleMaps } from '../lib/googleMaps';
 
-export default function GoogleMissionMap({location,analysisLocation,destination,fullscreen,radiusMeters=7081.1136,followUser=true,onOverlayMetrics}) {
+export default function GoogleMissionMap({location,analysisLocation,destination,fullscreen,radiusMeters=804.672,followUser=true,onOverlayMetrics}) {
   const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),overlayRef=useRef(null),initialized=useRef(false),firstFitDone=useRef(false),rafRef=useRef(null);
   const [error,setError]=useState('');
 
@@ -69,7 +69,23 @@ export default function GoogleMissionMap({location,analysisLocation,destination,
   // do not call fitBounds, so the wheel visibly expands/contracts at the same map zoom.
   useEffect(()=>{const circle=scaleCircleRef.current;if(!circle)return;circle.setRadius(Math.max(15,Number(radiusMeters)||152.4));publishMetrics()},[radiusMeters]);
 
-  useEffect(()=>{if(!mapRef.current)return;const center=mapRef.current.getCenter?.();const zoom=mapRef.current.getZoom?.();const id=setTimeout(()=>{window.google?.maps?.event?.trigger(mapRef.current,'resize');if(center)mapRef.current.setCenter(center);if(Number.isFinite(zoom))mapRef.current.setZoom(zoom);publishMetrics()},80);return()=>clearTimeout(id)},[fullscreen]);
+  useEffect(()=>{
+    const map=mapRef.current;
+    if(!map)return;
+    const center=map.getCenter?.();
+    const zoom=map.getZoom?.();
+    const timers=[];
+    const refresh=()=>{
+      const maps=mapsRef.current||window.google?.maps;
+      maps?.event?.trigger?.(map,'resize');
+      if(center)map.setCenter(center);
+      if(Number.isFinite(zoom))map.setZoom(zoom);
+      publishMetrics();
+    };
+    requestAnimationFrame(refresh);
+    [80,220,500].forEach(ms=>timers.push(setTimeout(refresh,ms)));
+    return()=>timers.forEach(clearTimeout);
+  },[fullscreen]);
 
   return <div className="google-map-shell">{error?<div className="map-error">{error}</div>:null}<div ref={el} className="google-map"/></div>;
 }

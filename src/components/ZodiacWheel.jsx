@@ -171,22 +171,37 @@ export default function ZodiacWheel({
       ctx.stroke();
 
       const lon = i * nakStep + nakStep / 2;
-      const [x, y] = point(lon, (nakOuter + nakInner) / 2);
+      // Pizza-slice treatment: labels point radially toward the center rather
+      // than running tangentially around the ring.
+      const labelRadius = nakInner + (nakOuter - nakInner) * .38;
+      const [x, y] = point(lon, labelRadius);
       ctx.save();
       ctx.translate(x, y);
       const screen = norm(lon + rotation);
-      let textRotation = rad(screen);
-      if (screen > 90 && screen < 270) textRotation += Math.PI;
+      let textRotation = rad(screen - 90);
+      // Keep text readable while preserving the inward/outward radial feel.
+      if (screen > 180) textRotation += Math.PI;
       ctx.rotate(textRotation);
-      ctx.font = compact ? '700 8px Inter, sans-serif' : '700 9.5px Inter, sans-serif';
-      ctx.fillStyle = `rgba(255,255,255,${.98 * opacity})`;
-      ctx.shadowColor = 'rgba(0,0,0,.95)';
-      ctx.shadowBlur = 3;
+      ctx.font = compact ? '800 8px Inter, sans-serif' : '800 10px Inter, sans-serif';
+      ctx.fillStyle = `rgba(255,255,255,${.99 * opacity})`;
+      ctx.shadowColor = 'rgba(0,0,0,.98)';
+      ctx.shadowBlur = 4;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(shortNakshatra(NAKSHATRAS[i]), 0, 0);
       ctx.shadowBlur = 0;
       ctx.restore();
+
+      // Extend the nakshatra boundary inward as a subtle pizza-slice spoke.
+      const boundaryLon = i * nakStep;
+      const [sx1, sy1] = point(boundaryLon, R * .49);
+      const [sx2, sy2] = point(boundaryLon, nakOuter);
+      ctx.beginPath();
+      ctx.moveTo(sx1, sy1);
+      ctx.lineTo(sx2, sy2);
+      ctx.strokeStyle = overlay ? 'rgba(255,233,166,.34)' : 'rgba(255,233,166,.24)';
+      ctx.lineWidth = .75;
+      ctx.stroke();
     }
 
     // House / navigation ring.

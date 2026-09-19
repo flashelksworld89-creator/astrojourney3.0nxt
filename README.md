@@ -1,6 +1,8 @@
+# AstroWalk Journey 3.4 — One-Mile Nakshatra Map Scale
+
 # AstroWalk Journey 3.3 — Map + Compass Synchronization
 
-This build adds geographic wheel resizing, smooth map/wheel synchronization, travel-direction controls, stronger aspect lines, and a canonical 4.4-mile (23,232-foot) nakshatra reach.
+This build adds geographic wheel resizing, smooth map/wheel synchronization, travel-direction controls, stronger aspect lines, and a canonical 1-mile nakshatra diameter (0.5-mile / 2,640-foot radius).
 
 # AstroWalk Journey 3.2.1 — Compass Legibility Fix
 
@@ -77,3 +79,10 @@ npm run build
 ```
 
 The build script explicitly uses Webpack for predictable WebAssembly compatibility with `@swisseph/browser`.
+
+
+## 3.4 map/wheel changes
+- Canonical nakshatra map wheel is 1 mile in diameter (0.5 mile / 2,640 ft radius).
+- Radius changes resize the wheel at the current map zoom instead of forcing an automatic re-zoom.
+- Nakshatra names are oriented radially toward the center, with subtle pizza-slice boundary spokes.
+- Fullscreen map mode uses explicit full-viewport sizing and staged Google Maps resize refreshes.

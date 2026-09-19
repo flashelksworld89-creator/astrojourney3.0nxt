@@ -238,3 +238,30 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
 .scale-presets button.active{border-color:rgba(244,200,66,.72);background:rgba(244,200,66,.16);color:#ffe9a6}
 .scale-note b{color:#ffe9a6}
 @media(max-width:720px){.map-direction-panel{right:8px;bottom:116px;width:calc(100% - 16px)}.direction-actions{grid-template-columns:1fr}.direction-buttons{grid-template-columns:repeat(8,1fr)}.direction-buttons button{padding:6px 2px}.compass-overlay-label{max-width:85vw;overflow:hidden;text-overflow:ellipsis}}
+
+/* v3.4 — one-mile nakshatra diameter + fullscreen reliability */
+.fullscreen-map-wrap{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  min-height:100vh!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+  z-index:9999!important;
+  background:#070a1c!important;
+}
+.fullscreen-map-wrap>.google-map-shell,
+.fullscreen-map-wrap>.google-map-shell>.google-map{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:100%!important;
+}
+.fullscreen-map-wrap .map-wheel-overlay.dynamic-wheel{
+  transition:width .16s ease-out,height .16s ease-out,left .10s linear,top .10s linear!important;
+}
+.map-wheel-overlay.dynamic-wheel{
+  transition:width .16s ease-out,height .16s ease-out,left .10s linear,top .10s linear!important;
+}
