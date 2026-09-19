@@ -25,6 +25,20 @@ const ASPECT_STYLE = {
   Opposition: ['rgba(251,146,60,.72)', []]
 };
 
+
+const NAKSHATRA_COLORS = [
+  '#EF4444','#F97316','#F59E0B','#EAB308','#84CC16','#22C55E','#10B981','#14B8A6','#06B6D4',
+  '#0EA5E9','#3B82F6','#6366F1','#8B5CF6','#A855F7','#D946EF','#EC4899','#F43F5E','#FB7185',
+  '#FDBA74','#FDE047','#A3E635','#4ADE80','#2DD4BF','#22D3EE','#60A5FA','#818CF8','#C084FC'
+];
+
+function hexToRgba(hex, alpha = 1) {
+  const h = hex.replace('#','');
+  const n = parseInt(h,16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 const COMPASS_POINTS = [
   ['N', 0], ['NE', 45], ['E', 90], ['SE', 135],
   ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]
@@ -88,6 +102,24 @@ export default function ZodiacWheel({
     const activeNak = travelZone?.nakshatra?.index ?? followedPlanet?.nakshatra?.index ?? 0;
     const activeCenter = activeNak + .5;
     const laneScale = R * .038;
+
+    // Colored nakshatra field. Each visible lane has its own color, while the
+    // active lane surrounds the traveler with a stronger translucent wash.
+    for(let offset=-5; offset<=5; offset++){
+      const idx=(activeNak+offset+27)%27;
+      const leftDelta=offset-.5;
+      const rightDelta=offset+.5;
+      const farLeft=cx+leftDelta*laneScale;
+      const farRight=cx+rightDelta*laneScale;
+      const nearLeft=cx+leftDelta*laneScale*4.6;
+      const nearRight=cx+rightDelta*laneScale*4.6;
+      ctx.beginPath();
+      ctx.moveTo(farLeft,horizonY);ctx.lineTo(farRight,horizonY);
+      ctx.lineTo(nearRight,originY);ctx.lineTo(nearLeft,originY);ctx.closePath();
+      const alpha=offset===0?.34:Math.max(.055,.16-Math.abs(offset)*.02);
+      ctx.fillStyle=hexToRgba(NAKSHATRA_COLORS[idx],alpha);ctx.fill();
+    }
+
     for(let i=0;i<=27;i++){
       let delta=i-activeCenter;
       while(delta>13.5) delta-=27;
@@ -96,8 +128,8 @@ export default function ZodiacWheel({
       const nearX=cx+delta*laneScale*4.6;
       const isActiveEdge=i===activeNak || i===activeNak+1;
       ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY);
-      ctx.strokeStyle=isActiveEdge?'rgba(255,233,166,.94)':'rgba(255,255,255,.22)';
-      ctx.lineWidth=isActiveEdge?2.4:.9;ctx.stroke();
+      ctx.strokeStyle=isActiveEdge?'rgba(255,255,255,.98)':'rgba(255,255,255,.30)';
+      ctx.lineWidth=isActiveEdge?3.2:1.0;ctx.stroke();
     }
 
     // House meridians: stronger structural divisions, expanding toward the user.
@@ -161,9 +193,10 @@ export default function ZodiacWheel({
     ctx.lineTo(cx+activeDeltaLeft*4.6,originY);
     ctx.closePath();
     const corridor=ctx.createLinearGradient(0,horizonY,0,originY);
-    corridor.addColorStop(0,'rgba(244,200,66,.10)');
-    corridor.addColorStop(.55,'rgba(244,200,66,.16)');
-    corridor.addColorStop(1,'rgba(244,200,66,.06)');
+    const activeColor=NAKSHATRA_COLORS[activeNak];
+    corridor.addColorStop(0,hexToRgba(activeColor,.20));
+    corridor.addColorStop(.55,hexToRgba(activeColor,.38));
+    corridor.addColorStop(1,hexToRgba(activeColor,.24));
     ctx.fillStyle=corridor;ctx.fill();
 
     // Current nakshatra + house label becomes part of the road surface.
@@ -190,7 +223,8 @@ export default function ZodiacWheel({
       ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY+R*.06);
       ctx.strokeStyle='rgba(2,6,23,.92)';ctx.lineWidth=14;ctx.stroke();
       ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY+R*.06);
-      ctx.strokeStyle='rgba(255,233,166,.98)';ctx.lineWidth=5;ctx.stroke();
+      ctx.strokeStyle=hexToRgba(NAKSHATRA_COLORS[activeNak],.98);ctx.lineWidth=7;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(farX,horizonY);ctx.lineTo(nearX,originY+R*.06);ctx.strokeStyle='rgba(255,247,194,.96)';ctx.lineWidth=2.4;ctx.stroke();
 
       // Repeating guide marks imply continuation; the user never reaches the planet.
       for(let k=1;k<=5;k++){

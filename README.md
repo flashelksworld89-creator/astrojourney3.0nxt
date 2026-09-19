@@ -47,3 +47,11 @@ The header should display **v3.2.2 Stable Rebuild** after a successful deploymen
 - The selected planet glyph rises above the horizon as a beacon; it represents a direction to follow, not a destination to reach.
 - The selected line itself carries the planet, nakshatra, house and degree label.
 - Upright mode remains the circular transit compass.
+
+## 3.2.6 — Live Nakshatra Field Mode
+- Flat mode now renders a 27-color nakshatra environment around the traveler.
+- The camera/travel bearing determines the active nakshatra field in real time.
+- GPS-driven chart recalculation updates the active field as the traveler moves.
+- The active nakshatra corridor is brighter and more saturated than adjacent lanes.
+- The HUD separates Current Nakshatra Field from Selected Planet Nakshatra.
+- The selected planet remains a raised beacon and its road line stays visible through the live field.
