@@ -24,7 +24,10 @@ export default function GoogleMissionMap({
   onCityCenterChange,
   onStreetViewChange,
   onStreetPovChange,
-  onCityViewportChange
+  onCityViewportChange,
+  onMapPlaceSelect,
+  focusLocation,
+  streetLocation
 }) {
   const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef('');
   const [error,setError]=useState('');
@@ -132,12 +135,26 @@ export default function GoogleMissionMap({
       maps.event.addListener(map,'idle',publishCityViewport);
       maps.event.addListener(map,'center_changed',()=>{ if(cityCentered) setTimeout(publishCityViewport,0); });
 
+      maps.event.addListener(map,'click',async ev=>{
+        const lat=ev?.latLng?.lat?.(),lng=ev?.latLng?.lng?.();
+        if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+        const point={lat,lng};
+        let label=`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        try{
+          const geocoder=new maps.Geocoder();
+          const {results}=await geocoder.geocode({location:point});
+          label=results?.[0]?.formatted_address||label;
+        }catch{}
+        onMapPlaceSelect?.({...point,label});
+      });
+
       const panorama=map.getStreetView?.();
       panoramaRef.current=panorama||null;
       if(panorama){
         const publish=()=>{
           const visible=!!panorama.getVisible?.();
           const pov=panorama.getPov?.()||{};
+          el.current?.classList.toggle('street-game-active',visible);
           onStreetViewChange?.(visible);
           onStreetPovChange?.({heading:Number(pov.heading)||0,pitch:Number(pov.pitch)||0,zoom:Number(pov.zoom)||0});
         };
@@ -155,7 +172,16 @@ export default function GoogleMissionMap({
   useEffect(()=>{
     if(!mapRef.current||!location)return;
     userMarkerRef.current?.setPosition(location);
-    if(routeRef.current&&destination)routeRef.current.setPath([location,destination]);
+    const maps=mapsRef.current;
+    if(destination&&maps){
+      if(!destMarkerRef.current)destMarkerRef.current=new maps.Marker({position:destination,map:mapRef.current,title:'Destination'});
+      else destMarkerRef.current.setPosition(destination);
+      if(!routeRef.current)routeRef.current=new maps.Polyline({path:[location,destination],map:mapRef.current,geodesic:true,strokeColor:'#ffffff',strokeOpacity:.72,strokeWeight:3});
+      else routeRef.current.setPath([location,destination]);
+    }else{
+      destMarkerRef.current?.setMap(null);destMarkerRef.current=null;
+      routeRef.current?.setMap(null);routeRef.current=null;
+    }
     resolveCityCenter(mapsRef.current,location);
     if(!cityCentered&&followUser)mapRef.current.panTo(location);
   },[location?.lat,location?.lng,followUser,destination?.lat,destination?.lng,cityCentered]);
@@ -183,6 +209,19 @@ export default function GoogleMissionMap({
   },[radiusMeters,cityRadiusMeters,cityCentered]);
 
   useEffect(()=>{const map=mapRef.current;if(!map)return;const center=map.getCenter?.();const zoom=map.getZoom?.();const timers=[0,80,220,500].map(delay=>setTimeout(()=>{window.google?.maps?.event?.trigger(map,'resize');if(center)map.setCenter(center);if(Number.isFinite(zoom))map.setZoom(zoom);if(cityCentered&&cityCenter)map.panTo(cityCenter);else if(followUser&&location)map.panTo(location);publishCityViewport();},delay));return()=>timers.forEach(clearTimeout)},[fullscreen]);
+
+  useEffect(()=>{
+    if(!focusLocation||!mapRef.current)return;
+    mapRef.current.panTo(focusLocation);
+    mapRef.current.setZoom(Math.max(15,Number(mapRef.current.getZoom?.())||15));
+  },[focusLocation?.lat,focusLocation?.lng,focusLocation?.nonce]);
+
+  useEffect(()=>{
+    if(!streetLocation||!panoramaRef.current)return;
+    panoramaRef.current.setPosition(streetLocation);
+    panoramaRef.current.setPov({heading:0,pitch:0});
+    panoramaRef.current.setVisible(true);
+  },[streetLocation?.lat,streetLocation?.lng,streetLocation?.nonce]);
 
   return <div className="google-map-shell">{error?<div className="map-error">{error}</div>:null}<div ref={el} className="google-map"/></div>;
 }

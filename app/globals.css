@@ -437,3 +437,17 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
 .street-game-overlay~.map-wheel-overlay.street-flat{opacity:.16;transform:translate(-50%,-34%) perspective(1100px) rotateX(66deg) scaleX(1.34) scaleY(.88)!important;}
 @media(max-width:720px){.street-route-label strong{font-size:24px}.street-road-data{max-width:86%;overflow:hidden}.street-road-data span:nth-of-type(n+2){display:none}.street-game-hud{right:8px;left:8px;overflow:auto}.street-game-hud>div{min-width:84px}.street-beacon-orb{width:52px;height:52px}.street-beacon-orb span{font-size:28px}}
 @media(prefers-reduced-motion:reduce){.street-route-pulse{animation:none;opacity:.35}}
+
+/* v3.3.4 — in-map location tools + digitized Street View */
+.map-location-search{position:absolute;z-index:42;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;width:min(560px,calc(100% - 190px));pointer-events:auto}
+.map-location-search input{flex:1;min-width:0;height:42px;border:1px solid rgba(244,200,66,.45);border-radius:12px;background:rgba(5,9,18,.9);color:#fff;padding:0 14px;font-size:15px;backdrop-filter:blur(10px)}
+.map-location-search button,.map-selected-location button{border:1px solid rgba(244,200,66,.48);background:rgba(16,24,39,.94);color:#f8e9ae;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}
+.map-location-search button:disabled{opacity:.6;cursor:wait}
+.map-selected-location{position:absolute;z-index:43;left:50%;bottom:18px;transform:translateX(-50%);width:min(760px,calc(100% - 32px));padding:12px 14px;border:1px solid rgba(244,200,66,.42);border-radius:14px;background:rgba(4,8,18,.9);backdrop-filter:blur(12px);box-shadow:0 14px 50px rgba(0,0,0,.35);pointer-events:auto}
+.map-selected-location>div:first-child{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}.map-selected-location small{color:#aab5c7}.map-selected-location b{color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.map-selected-actions{display:flex;gap:8px;flex-wrap:wrap}.map-selected-actions .quiet{margin-left:auto;min-width:40px}
+.google-map.street-game-active{filter:saturate(.72) contrast(1.16) brightness(.7) hue-rotate(-4deg)}
+.google-map.street-game-active canvas,.google-map.street-game-active img{image-rendering:auto}
+@media(max-width:720px){.map-location-search{top:10px;left:10px;right:10px;transform:none;width:auto}.map-location-search input{font-size:16px}.map-location-search button{padding-inline:10px}.map-selected-location{bottom:12px}.map-selected-actions button{flex:1 1 44%}.map-selected-actions .quiet{flex:0 0 44px}}
+.map-location-search-hud{z-index:820!important}
+.map-selected-location-hud{z-index:820!important}
