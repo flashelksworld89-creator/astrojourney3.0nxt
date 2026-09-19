@@ -1,3 +1,7 @@
+# AstroWalk Journey 3.2.1 — Compass Legibility Fix
+
+This build strengthens the approved compass design: opaque-enough navigation glass, readable nakshatra ring, explicit house cusp spokes using actual cusp-to-cusp sectors, stronger ring boundaries, and fully visible planetary glyphs over the map.
+
 # AstroWalk Journey 3.1 — Compass Design Correction
 
 This revision fixes the planet-glyph collision that caused inner transit planets to display zodiac-sign symbols. Planet glyphs are now stored separately from zodiac glyphs and rendered at exact sidereal longitudes. The compass is redesigned to match the approved map-overlay direction: finer bezel, smaller zodiac symbols, all 27 nakshatras, true planet glyphs, sidereal aspect lines, 8-direction compass labels, live Transit ASC, natal ASC with degree, real destination bearing/house zone, and high transparency over city streets.

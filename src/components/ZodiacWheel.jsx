@@ -69,7 +69,7 @@ export default function ZodiacWheel({
     const cy = H / 2;
     const R = Math.min(W, H) / 2 - 58;
     const rotation = 90 - chart.asc;
-    const opacity = overlay ? 0.88 : 1;
+    const opacity = 1;
 
     ctx.clearRect(0, 0, W, H);
     ctx.lineCap = 'round';
@@ -91,9 +91,9 @@ export default function ZodiacWheel({
 
     // Transparent navigation glass. The map remains readable below it.
     const glass = ctx.createRadialGradient(cx, cy, R * .08, cx, cy, R);
-    glass.addColorStop(0, overlay ? 'rgba(2,6,23,.025)' : 'rgba(2,6,23,.50)');
-    glass.addColorStop(.52, overlay ? 'rgba(2,6,23,.035)' : 'rgba(2,6,23,.58)');
-    glass.addColorStop(1, overlay ? 'rgba(2,6,23,.085)' : 'rgba(2,6,23,.76)');
+    glass.addColorStop(0, overlay ? 'rgba(2,6,23,.10)' : 'rgba(2,6,23,.50)');
+    glass.addColorStop(.52, overlay ? 'rgba(2,6,23,.15)' : 'rgba(2,6,23,.58)');
+    glass.addColorStop(1, overlay ? 'rgba(2,6,23,.24)' : 'rgba(2,6,23,.76)');
     ctx.beginPath();
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fillStyle = glass;
@@ -135,11 +135,11 @@ export default function ZodiacWheel({
       ctx.arc(cx, cy, zodiacInner, e, s, true);
       ctx.closePath();
       ctx.fillStyle = overlay
-        ? (i % 2 ? 'rgba(5,8,24,.035)' : 'rgba(5,8,24,.012)')
+        ? (i % 2 ? 'rgba(5,8,24,.20)' : 'rgba(5,8,24,.11)')
         : (i % 2 ? 'rgba(15,23,42,.32)' : 'rgba(2,6,23,.20)');
       ctx.fill();
-      ctx.strokeStyle = `rgba(244,200,66,${.25 * opacity})`;
-      ctx.lineWidth = .5;
+      ctx.strokeStyle = `rgba(244,200,66,${.62 * opacity})`;
+      ctx.lineWidth = .9;
       ctx.stroke();
 
       const [x, y] = point(i * 30 + 15, (zodiacOuter + zodiacInner) / 2);
@@ -162,11 +162,11 @@ export default function ZodiacWheel({
       ctx.arc(cx, cy, nakInner, e, s, true);
       ctx.closePath();
       ctx.fillStyle = overlay
-        ? (i % 2 ? 'rgba(255,255,255,.008)' : 'rgba(244,200,66,.007)')
+        ? (i % 2 ? 'rgba(15,23,42,.30)' : 'rgba(68,52,16,.20)')
         : (i % 2 ? 'rgba(255,255,255,.014)' : 'rgba(244,200,66,.011)');
       ctx.fill();
-      ctx.strokeStyle = `rgba(226,232,240,${.18 * opacity})`;
-      ctx.lineWidth = .42;
+      ctx.strokeStyle = `rgba(255,233,166,${.48 * opacity})`;
+      ctx.lineWidth = .8;
       ctx.stroke();
 
       const lon = i * nakStep + nakStep / 2;
@@ -177,11 +177,14 @@ export default function ZodiacWheel({
       let textRotation = rad(screen);
       if (screen > 90 && screen < 270) textRotation += Math.PI;
       ctx.rotate(textRotation);
-      ctx.font = compact ? '6.8px Inter, sans-serif' : '8px Inter, sans-serif';
-      ctx.fillStyle = `rgba(241,245,249,${.84 * opacity})`;
+      ctx.font = compact ? '700 8px Inter, sans-serif' : '700 9.5px Inter, sans-serif';
+      ctx.fillStyle = `rgba(255,255,255,${.98 * opacity})`;
+      ctx.shadowColor = 'rgba(0,0,0,.95)';
+      ctx.shadowBlur = 3;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(shortNakshatra(NAKSHATRAS[i]), 0, 0);
+      ctx.shadowBlur = 0;
       ctx.restore();
     }
 
@@ -192,33 +195,55 @@ export default function ZodiacWheel({
 
     for (let h = 0; h < 12; h++) {
       const cusp = chart.houseCusps[h];
+      let nextCusp = chart.houseCusps[(h + 1) % 12];
+      if (nextCusp <= cusp) nextCusp += 360;
+      const span = nextCusp - cusp;
       const s = rad(cusp + rotation - 90);
-      const e = rad(cusp + 30 + rotation - 90);
+      const e = rad(nextCusp + rotation - 90);
       const active = selectedHouse === h + 1 || destinationZone?.house === h + 1;
       ctx.beginPath();
       ctx.arc(cx, cy, houseOuter, s, e);
       ctx.arc(cx, cy, houseInner, e, s, true);
       ctx.closePath();
       ctx.fillStyle = active
-        ? `rgba(244,200,66,${overlay ? .065 : .11})`
-        : overlay ? 'rgba(2,6,23,.006)' : 'rgba(255,255,255,.009)';
+        ? `rgba(244,200,66,${overlay ? .16 : .14})`
+        : overlay ? 'rgba(2,6,23,.18)' : 'rgba(255,255,255,.012)';
       ctx.fill();
       ctx.strokeStyle = active
-        ? `rgba(255,233,166,${.74 * opacity})`
-        : `rgba(226,232,240,${.13 * opacity})`;
-      ctx.lineWidth = active ? 1 : .42;
+        ? `rgba(255,233,166,${.96 * opacity})`
+        : `rgba(255,255,255,${.44 * opacity})`;
+      ctx.lineWidth = active ? 1.8 : 1.0;
       ctx.stroke();
 
-      const [x, y] = point(cusp + 15, (houseOuter + houseInner) / 2);
-      ctx.font = compact ? '600 8px Inter, sans-serif' : '700 10px Inter, sans-serif';
+      const [x, y] = point(cusp + span / 2, (houseOuter + houseInner) / 2);
+      ctx.font = compact ? '800 10px Inter, sans-serif' : '800 12px Inter, sans-serif';
       ctx.fillStyle = active ? PALE_GOLD : `rgba(248,250,252,${.76 * opacity})`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(h + 1), x, y);
     }
 
+    // Explicit house cusp spokes: these are intentionally stronger than the map beneath.
+    for (let h = 0; h < 12; h++) {
+      const cusp = chart.houseCusps[h];
+      const [x1, y1] = point(cusp, houseInner);
+      const [x2, y2] = point(cusp, houseOuter);
+      const angular = h % 3 === 0;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = angular ? 'rgba(255,233,166,.96)' : 'rgba(248,250,252,.64)';
+      ctx.lineWidth = angular ? 2.0 : 1.25;
+      ctx.stroke();
+    }
+
+    circle(houseOuter, 'rgba(255,233,166,.72)', 1.1);
+    circle(houseInner, 'rgba(255,233,166,.72)', 1.1);
+    circle(nakOuter, 'rgba(255,233,166,.58)', .9);
+    circle(nakInner, 'rgba(255,233,166,.58)', .9);
+
     // Inner aspect field.
-    circle(houseInner - 1, `rgba(244,200,66,${.12 * opacity})`, .5, overlay ? 'rgba(2,6,23,.010)' : 'rgba(2,6,23,.20)');
+    circle(houseInner - 1, `rgba(244,200,66,${.36 * opacity})`, .8, overlay ? 'rgba(2,6,23,.08)' : 'rgba(2,6,23,.20)');
 
     const aspectRadius = houseInner - 34;
     const byId = new Map(planets.map(p => [p.id, p]));
@@ -273,17 +298,39 @@ export default function ZodiacWheel({
     });
 
     // Eight compass bearings outside the astrological rings.
+    // These labels need to remain readable over a detailed street map, so each
+    // gets a dark translucent badge and the cardinal directions are larger.
     COMPASS_POINTS.forEach(([label, bearing]) => {
       const a = rad(bearing - 90);
-      const rr = R + (label.length === 1 ? 28 : 25);
+      const cardinal = label.length === 1;
+      const rr = R + (cardinal ? 35 : 33);
       const x = cx + rr * Math.cos(a);
       const y = cy + rr * Math.sin(a);
-      const cardinal = label.length === 1;
-      ctx.font = cardinal ? '700 13px Inter, sans-serif' : '600 8px Inter, sans-serif';
-      ctx.fillStyle = label === 'E' ? '#FFF7C2' : `rgba(244,200,66,${cardinal ? .98 : .72})`;
+      const isEast = label === 'E';
+      const badgeW = cardinal ? 34 : 38;
+      const badgeH = cardinal ? 28 : 22;
+
+      ctx.save();
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(x - badgeW / 2, y - badgeH / 2, badgeW, badgeH, cardinal ? 9 : 7);
+      } else {
+        ctx.rect(x - badgeW / 2, y - badgeH / 2, badgeW, badgeH);
+      }
+      ctx.fillStyle = isEast ? 'rgba(67,52,12,.92)' : 'rgba(2,6,23,.86)';
+      ctx.fill();
+      ctx.strokeStyle = isEast ? 'rgba(255,233,166,.98)' : 'rgba(244,200,66,.78)';
+      ctx.lineWidth = isEast ? 1.8 : 1.2;
+      ctx.stroke();
+
+      ctx.font = cardinal ? '800 17px Inter, sans-serif' : '750 10px Inter, sans-serif';
+      ctx.fillStyle = isEast ? '#FFF7C2' : cardinal ? '#FFE9A6' : '#F8E7A0';
+      ctx.shadowColor = 'rgba(0,0,0,.95)';
+      ctx.shadowBlur = 3;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(label, x, y);
+      ctx.fillText(label, x, y + .5);
+      ctx.restore();
     });
 
     // Live / transit Ascendant. Wheel rotation locks it to East.

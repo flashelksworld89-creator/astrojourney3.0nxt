@@ -176,3 +176,15 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
 .compass-overlay-label{background:rgba(3,7,18,.68)!important;border-color:rgba(244,200,66,.24)!important;letter-spacing:.19em!important}
 .wheel-card .compass-v31{padding:6px 0}
 @media(max-width:720px){.compass-v31 .wheel-canvas{width:min(100%,560px)}}
+
+
+/* v3.2 compass legibility pass */
+.map-wheel-overlay .compass-v31 .wheel-canvas.compact{
+  opacity:1!important;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.82))!important;
+}
+.map-wheel-overlay::before{
+  background:radial-gradient(circle,rgba(2,6,23,.07) 0 45%,rgba(2,6,23,.12) 46% 68%,rgba(2,6,23,.20) 69% 100%)!important;
+  border:1px solid rgba(244,200,66,.42)!important;
+}
+.compass-overlay-label{background:rgba(5,7,20,.94)!important;border-color:rgba(244,200,66,.52)!important;color:#ffe9a6!important}
