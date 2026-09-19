@@ -1,3 +1,7 @@
+# AstroWalk Journey 3.3 — Map + Compass Synchronization
+
+This build adds geographic wheel resizing, smooth map/wheel synchronization, travel-direction controls, stronger aspect lines, and a canonical 4.4-mile (23,232-foot) nakshatra reach.
+
 # AstroWalk Journey 3.2.1 — Compass Legibility Fix
 
 This build strengthens the approved compass design: opaque-enough navigation glass, readable nakshatra ring, explicit house cusp spokes using actual cusp-to-cusp sectors, stronger ring boundaries, and fully visible planetary glyphs over the map.

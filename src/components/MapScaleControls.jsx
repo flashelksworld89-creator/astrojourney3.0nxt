@@ -1,22 +1,24 @@
+const NAKSHATRA_REACH_METERS = 4.4 * 1609.344;
+
 const UNITS = {
-  ft: { label:'Feet', toMeters:v=>v*0.3048, fromMeters:m=>m/0.3048, min:100, max:10000, step:50 },
-  yd: { label:'Yards', toMeters:v=>v*0.9144, fromMeters:m=>m/0.9144, min:50, max:5000, step:25 },
-  mi: { label:'Miles', toMeters:v=>v*1609.344, fromMeters:m=>m/1609.344, min:0.05, max:10, step:0.05 },
-  m:  { label:'Meters', toMeters:v=>v, fromMeters:m=>m, min:25, max:5000, step:25 },
-  km: { label:'Kilometers', toMeters:v=>v*1000, fromMeters:m=>m/1000, min:0.05, max:15, step:0.05 }
+  ft: { label:'Feet', toMeters:v=>v*0.3048, fromMeters:m=>m/0.3048, min:100, max:30000, step:50 },
+  yd: { label:'Yards', toMeters:v=>v*0.9144, fromMeters:m=>m/0.9144, min:50, max:10000, step:25 },
+  mi: { label:'Miles', toMeters:v=>v*1609.344, fromMeters:m=>m/1609.344, min:0.05, max:12, step:0.05 },
+  m:  { label:'Meters', toMeters:v=>v, fromMeters:m=>m, min:25, max:12000, step:25 },
+  km: { label:'Kilometers', toMeters:v=>v*1000, fromMeters:m=>m/1000, min:0.05, max:20, step:0.05 }
 };
 
 const PRESETS = [
   {label:'250 ft', meters:76.2},
   {label:'500 ft', meters:152.4},
-  {label:'¼ mi', meters:402.336},
-  {label:'½ mi', meters:804.672},
+  {label:'1,000 ft', meters:304.8},
+  {label:'2,500 ft', meters:762},
   {label:'1 mi', meters:1609.344},
-  {label:'5 mi', meters:8046.72}
+  {label:'Nakshatra · 4.4 mi', meters:NAKSHATRA_REACH_METERS, primary:true}
 ];
 
 function pretty(value, unit) {
-  if(unit==='mi'||unit==='km') return value<1 ? value.toFixed(2) : value.toFixed(value<10?1:0);
+  if(unit==='mi'||unit==='km') return value<1 ? value.toFixed(2) : value.toFixed(value<10?2:1);
   return Math.round(value).toLocaleString();
 }
 
@@ -24,6 +26,7 @@ export default function MapScaleControls({radiusMeters, unit, onUnitChange, onRa
   const cfg=UNITS[unit]||UNITS.ft;
   const raw=cfg.fromMeters(radiusMeters);
   const value=Math.min(cfg.max,Math.max(cfg.min,raw));
+  const atNakshatra=Math.abs(radiusMeters-NAKSHATRA_REACH_METERS)<5;
 
   const setDisplayValue=(next)=>{
     const parsed=Number(next);
@@ -34,27 +37,19 @@ export default function MapScaleControls({radiusMeters, unit, onUnitChange, onRa
   return (
     <div className="map-scale-panel" aria-label="Wheel geographic scale">
       <div className="scale-topline">
-        <strong>Wheel radius</strong>
+        <strong>Wheel reach</strong>
         <span>{pretty(raw,unit)} {unit}</span>
       </div>
       <div className="scale-row">
-        <input
-          aria-label="Wheel radius"
-          type="range"
-          min={cfg.min}
-          max={cfg.max}
-          step={cfg.step}
-          value={value}
-          onChange={e=>setDisplayValue(e.target.value)}
-        />
+        <input aria-label="Wheel radius" type="range" min={cfg.min} max={cfg.max} step={cfg.step} value={value} onChange={e=>setDisplayValue(e.target.value)}/>
         <select value={unit} onChange={e=>onUnitChange(e.target.value)} aria-label="Distance unit">
           {Object.entries(UNITS).map(([key,item])=><option key={key} value={key}>{item.label}</option>)}
         </select>
       </div>
       <div className="scale-presets">
-        {PRESETS.map(p=><button type="button" key={p.label} onClick={()=>onRadiusChange(p.meters)}>{p.label}</button>)}
+        {PRESETS.map(p=><button type="button" className={p.primary&&atNakshatra?'active':''} key={p.label} onClick={()=>onRadiusChange(p.meters)}>{p.label}</button>)}
       </div>
-      <div className="scale-note">Scale changes the map area only. It does not alter planetary, house, nakshatra, ASC/DSC, or aspect calculations.</div>
+      <div className="scale-note"><b>Canonical nakshatra reach:</b> 4.4 mi = 23,232 ft from the user to the outer rim. Walking presets shrink the same compass without changing the astrology.</div>
     </div>
   );
 }

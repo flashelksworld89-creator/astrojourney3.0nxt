@@ -50,6 +50,7 @@ export default function ZodiacWheel({
   selectedHouse,
   onSelectHouse,
   destinationBearing = null,
+  travelBearing = null,
   compact = false,
   overlay = false,
   radiusMeters = null,
@@ -254,12 +255,22 @@ export default function ZodiacWheel({
       const [x1, y1] = point(a.siderealLon, aspectRadius);
       const [x2, y2] = point(b.siderealLon, aspectRadius);
       const style = ASPECT_STYLE[aspect.type] || ASPECT_STYLE.Sextile;
+      // Dark halo first so aspect geometry remains visible over streets.
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = 'rgba(2,6,23,.86)';
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = aspect.orb < 1 ? 4.2 : 3.2;
+      ctx.setLineDash(style[1]);
+      ctx.stroke();
+      // Bright aspect line on top.
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.strokeStyle = style[0];
-      ctx.globalAlpha = overlay ? .70 : .92;
-      ctx.lineWidth = aspect.orb < 1 ? 1.35 : .72;
+      ctx.globalAlpha = overlay ? .96 : 1;
+      ctx.lineWidth = aspect.orb < 1 ? 2.35 : 1.65;
       ctx.setLineDash(style[1]);
       ctx.stroke();
       ctx.setLineDash([]);
@@ -378,6 +389,33 @@ export default function ZodiacWheel({
       }
     }
 
+
+    // User-selected travel direction. This is a map-navigation bearing only; it
+    // does not change sidereal longitudes, houses, or the destination calculation.
+    if (Number.isFinite(Number(travelBearing))) {
+      const bearing = norm(Number(travelBearing));
+      const a = rad(bearing - 90);
+      const arrowR = houseInner - 54;
+      const ex = cx + arrowR * Math.cos(a);
+      const ey = cy + arrowR * Math.sin(a);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(ex, ey);
+      ctx.strokeStyle = 'rgba(125,211,252,.94)';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([8,5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.rotate(a + Math.PI / 2);
+      ctx.beginPath();
+      ctx.moveTo(0,-10);ctx.lineTo(7,6);ctx.lineTo(-7,6);ctx.closePath();
+      ctx.fillStyle='#7DD3FC';ctx.fill();
+      ctx.strokeStyle='rgba(2,6,23,.95)';ctx.lineWidth=1.2;ctx.stroke();
+      ctx.restore();
+    }
+
     // Destination marker uses the actual map bearing and destination house zone.
     if (destinationZone) {
       const [dx, dy] = point(destinationZone.longitude, houseInner - 3);
@@ -415,7 +453,7 @@ export default function ZodiacWheel({
       ctx.textAlign = 'center';
       ctx.fillText(`MAP RADIUS · ${formatDistance(radiusMeters / 1000, distanceUnit).toUpperCase()}`, cx, H - 13);
     }
-  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit]);
+  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, travelBearing, compact, overlay, radiusMeters, distanceUnit]);
 
   const handleClick = e => {
     if (!chart) return;
@@ -450,7 +488,7 @@ export default function ZodiacWheel({
   };
 
   return (
-    <div className={overlay ? 'clean-wheel overlay-wheel compass-v31' : 'clean-wheel compass-v31'}>
+    <div className={overlay ? 'clean-wheel overlay-wheel compass-v31 compass-v33' : 'clean-wheel compass-v31 compass-v33'}>
       <canvas
         ref={ref}
         width={size}
