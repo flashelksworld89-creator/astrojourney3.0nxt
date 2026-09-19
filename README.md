@@ -28,7 +28,7 @@ The Swiss Ephemeris sidereal calculation engine, Street View Flat/Upright mode, 
 - Zodiac, house, transit, natal and angle layers remain aligned above the city-wide nakshatra field.
 
 
-## v3.3.2 Deployment Repair
+## v3.3.3 Deployment Repair
 - Rewrites malformed literal `\n` sequences in `app/globals.css` as real line breaks.
 - Preserves the full-city 27-wedge nakshatra blanket introduced in v3.3.1.
 - Preserves dark city-map styling, city-radius screen scaling, transit/natal layers, and geographic user projection.

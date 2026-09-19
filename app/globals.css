@@ -406,3 +406,34 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
   border-color:rgba(255,233,166,.30)!important;
   backdrop-filter:blur(5px)!important;
 }
+
+/* v3.3.3 Street View game-style nakshatra road layer */
+.street-game-overlay{
+  position:absolute;inset:0;z-index:640;overflow:hidden;pointer-events:none;
+  --nak-color:#22c55e;--nak-soft:rgba(34,197,94,.18);--nak-mid:rgba(34,197,94,.42);--nak-strong:rgba(34,197,94,.82);
+}
+.street-game-overlay .street-sky-vignette{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(2,6,23,.16),transparent 31%,transparent 66%,rgba(2,6,23,.24));}
+.street-game-overlay .street-ground-tint{position:absolute;left:-18%;right:-18%;top:47%;bottom:-12%;background:linear-gradient(to bottom,transparent,var(--nak-soft) 24%,var(--nak-mid) 100%);mix-blend-mode:screen;opacity:.72;clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);}
+.street-perspective-field{position:absolute;left:50%;bottom:-4%;width:min(900px,118%);height:66%;transform:translateX(-50%);perspective:900px;transform-origin:center bottom;}
+.street-lane-fill{position:absolute;left:50%;bottom:0;width:96%;height:100%;transform:translateX(-50%);clip-path:polygon(45% 0,55% 0,94% 100%,6% 100%);background:linear-gradient(to bottom,rgba(255,255,255,.01),var(--nak-soft) 28%,var(--nak-mid));filter:drop-shadow(0 0 22px var(--nak-mid));}
+.street-boundary{position:absolute;bottom:0;width:3px;height:100%;background:linear-gradient(to top,var(--nak-strong),rgba(255,255,255,.72),transparent);box-shadow:0 0 12px var(--nak-color);transform-origin:bottom center;}
+.street-boundary-left{left:10%;transform:rotate(24deg)}
+.street-boundary-right{right:10%;transform:rotate(-24deg)}
+.street-route-line{position:absolute;left:calc(50% - 3px);bottom:-3%;width:6px;height:108%;transform:rotate(var(--route-angle));transform-origin:50% 100%;background:linear-gradient(to top,#fff,var(--nak-color) 38%,rgba(255,255,255,.32) 82%,transparent);box-shadow:0 0 8px #fff,0 0 20px var(--nak-color),0 0 42px var(--nak-color);border-radius:999px;}
+.street-route-pulse{position:absolute;left:50%;bottom:10%;width:34px;height:60px;border:2px solid rgba(255,255,255,.78);border-radius:50%;transform:translateX(-50%) perspective(220px) rotateX(68deg);box-shadow:0 0 18px var(--nak-color);animation:streetPulse 2.4s linear infinite;}
+.street-route-pulse-b{animation-delay:1.2s}
+@keyframes streetPulse{0%{bottom:8%;opacity:.9;transform:translateX(-50%) perspective(220px) rotateX(68deg) scale(.55)}100%{bottom:72%;opacity:0;transform:translateX(-50%) perspective(220px) rotateX(68deg) scale(.12)}}
+.street-route-label{position:absolute;left:50%;bottom:25%;transform:translateX(-50%) perspective(350px) rotateX(55deg);text-align:center;text-transform:uppercase;text-shadow:0 2px 6px #000,0 0 12px var(--nak-color);white-space:nowrap;}
+.street-route-label strong{display:block;font-size:clamp(24px,4vw,48px);letter-spacing:.14em;color:#fff;font-weight:900}.street-route-label span{display:block;margin-top:3px;font-size:10px;letter-spacing:.18em;color:#fff8dc;font-weight:800}
+.street-road-data{position:absolute;left:50%;bottom:6%;transform:translateX(-50%) perspective(350px) rotateX(55deg);display:flex;gap:10px;align-items:center;padding:7px 12px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(2,6,23,.58);backdrop-filter:blur(4px);color:white;text-shadow:0 1px 4px #000;white-space:nowrap;}
+.street-road-data b{color:#fff7c2}.street-road-data span{font-size:9px;letter-spacing:.05em}
+.street-planet-beacon{position:absolute;left:var(--beacon-x);top:19%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 0 18px var(--nak-color));transition:left .22s ease,opacity .22s ease;}
+.street-beacon-orb{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;border:2px solid rgba(255,255,255,.95);background:radial-gradient(circle,#fff 0 8%,var(--nak-color) 26%,rgba(2,6,23,.9) 72%);box-shadow:0 0 12px #fff,0 0 30px var(--nak-color);}
+.street-beacon-orb span{font-size:34px;color:#fff;text-shadow:0 0 12px #fff}
+.street-beacon-stem{width:3px;height:92px;background:linear-gradient(to top,var(--nak-color),rgba(255,255,255,.65),transparent);box-shadow:0 0 12px var(--nak-color);order:2}.street-beacon-card{order:1;margin-bottom:7px;padding:5px 9px;border-radius:10px;background:rgba(2,6,23,.82);border:1px solid var(--nak-mid);text-align:center;color:white}.street-beacon-card b,.street-beacon-card span,.street-beacon-card small{display:block}.street-beacon-card b{color:#fff7c2;font-size:12px}.street-beacon-card span,.street-beacon-card small{font-size:8px}.street-planet-beacon.is-offscreen{left:clamp(7%,var(--beacon-x),93%);opacity:.82}
+.street-game-hud{position:absolute;left:12px;bottom:12px;display:flex;gap:6px;align-items:stretch;max-width:calc(100% - 24px);padding:7px;border-radius:13px;background:rgba(2,6,23,.84);border:1px solid var(--nak-mid);backdrop-filter:blur(8px);pointer-events:auto;color:#fff;box-shadow:0 8px 28px rgba(0,0,0,.34)}
+.street-game-hud>div{min-width:94px;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.045)}.street-game-hud small,.street-game-hud b{display:block}.street-game-hud small{font-size:7px;text-transform:uppercase;letter-spacing:.08em;color:#a8b2c5}.street-game-hud b{font-size:10px;color:#fff}.street-game-hud button{pointer-events:auto;border:1px solid var(--nak-mid);background:var(--nak-soft);color:#fff7c2;border-radius:8px;padding:0 10px;font-size:9px}
+/* In Street View, the dedicated game road layer carries the flat presentation. */
+.street-game-overlay~.map-wheel-overlay.street-flat{opacity:.16;transform:translate(-50%,-34%) perspective(1100px) rotateX(66deg) scaleX(1.34) scaleY(.88)!important;}
+@media(max-width:720px){.street-route-label strong{font-size:24px}.street-road-data{max-width:86%;overflow:hidden}.street-road-data span:nth-of-type(n+2){display:none}.street-game-hud{right:8px;left:8px;overflow:auto}.street-game-hud>div{min-width:84px}.street-beacon-orb{width:52px;height:52px}.street-beacon-orb span{font-size:28px}}
+@media(prefers-reduced-motion:reduce){.street-route-pulse{animation:none;opacity:.35}}
