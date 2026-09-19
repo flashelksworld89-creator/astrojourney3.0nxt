@@ -29,3 +29,10 @@ The header should display **v3.2.2 Stable Rebuild** after a successful deploymen
 - The bearing rotates relative to Street View camera heading while the user turns.
 - A visible follow panel shows planet, degree bearing, cardinal direction, and Stop control.
 - Follow Planet is an astrological compass projection; it is not presented as the physical sky direction of the astronomical body.
+
+
+## 3.2.4 additions
+- Flat Street View is widened into an immersive astrological travel field without changing the stable map anchor.
+- The current direction/camera heading highlights the nakshatra corridor the traveler is facing.
+- Flat-mode HUD shows selected planet, current travel house, planetary-line house, nakshatra/pada, zodiac degree, nakshatra degree, and follow bearing.
+- Selected planetary line is labeled directly on the flattened compass.

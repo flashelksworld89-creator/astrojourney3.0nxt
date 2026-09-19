@@ -55,7 +55,9 @@ export default function ZodiacWheel({
   radiusMeters = null,
   distanceUnit = 'ft',
   displayHeading = 0,
-  followingPlanetId = null
+  followingPlanetId = null,
+  flatMode = false,
+  travelBearing = null
 }) {
   const ref = useRef(null);
   const size = 760;
@@ -196,6 +198,36 @@ export default function ZodiacWheel({
     const houseOuter = nakInner - 3;
     const houseInner = R * .515;
     const destinationZone = destinationZoneFromBearing(chart, Number(destinationBearing));
+    const travelZone = destinationZoneFromBearing(chart, Number(travelBearing));
+
+    // In immersive Flat mode, the direction the traveler is facing becomes a broad
+    // nakshatra corridor extending from the user's position toward the rim.
+    if (flatMode && travelZone?.nakshatra) {
+      const step = 360 / 27;
+      const idx = travelZone.nakshatra.index;
+      const startLon = idx * step;
+      const endLon = startLon + step;
+      const s = rad(startLon + rotation - 90);
+      const e = rad(endLon + rotation - 90);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, nakOuter, s, e);
+      ctx.closePath();
+      const corridor = ctx.createRadialGradient(cx, cy, 0, cx, cy, nakOuter);
+      corridor.addColorStop(0, 'rgba(244,200,66,.18)');
+      corridor.addColorStop(.45, 'rgba(244,200,66,.12)');
+      corridor.addColorStop(1, 'rgba(244,200,66,.035)');
+      ctx.fillStyle = corridor;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,233,166,.62)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      const [sx, sy] = point(startLon, nakOuter);
+      const [ex, ey] = point(endLon, nakOuter);
+      ctx.moveTo(cx, cy); ctx.lineTo(sx, sy);
+      ctx.moveTo(cx, cy); ctx.lineTo(ex, ey);
+      ctx.stroke();
+    }
 
     for (let h = 0; h < 12; h++) {
       const cusp = chart.houseCusps[h];
@@ -334,6 +366,35 @@ export default function ZodiacWheel({
         ctx.fillStyle = '#FFF7C2';
         ctx.textAlign = 'center';
         ctx.fillText(`FOLLOW ${followedPlanet.glyph} ${followedPlanet.name} · ${absoluteBearing.toFixed(0)}° ${dir}`, cx, cy + 22);
+      }
+
+      if (flatMode) {
+        const nk = followedPlanet.nakshatra;
+        const signDegree = Number(followedPlanet.degree);
+        const nkDegree = Number(nk?.degreeInNakshatra);
+        const midX = cx + (fx - cx) * .55;
+        const midY = cy + (fy - cy) * .55;
+        const label = `${followedPlanet.glyph} ${followedPlanet.name}  ·  H${followedPlanet.house}  ·  ${nk?.name || '—'}  ·  ${followedPlanet.sign} ${Number.isFinite(signDegree)?signDegree.toFixed(1):followedPlanet.degree}°`;
+        ctx.save();
+        ctx.font = '800 10px Inter, sans-serif';
+        const tw = Math.min(310, ctx.measureText(label).width + 20);
+        const bx = Math.max(12, Math.min(W - tw - 12, midX - tw / 2));
+        const by = Math.max(12, Math.min(H - 36, midY - 14));
+        ctx.fillStyle = 'rgba(2,6,23,.90)';
+        ctx.strokeStyle = 'rgba(255,233,166,.86)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(bx, by, tw, 28, 8); else ctx.rect(bx, by, tw, 28);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#FFF7C2';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, bx + tw / 2, by + 10);
+        if (Number.isFinite(nkDegree)) {
+          ctx.font = '700 8px Inter, sans-serif';
+          ctx.fillStyle = '#F4C842';
+          ctx.fillText(`Nakshatra degree ${nkDegree.toFixed(2)}°`, bx + tw / 2, by + 20);
+        }
+        ctx.restore();
       }
     }
 
@@ -486,7 +547,7 @@ export default function ZodiacWheel({
       ctx.textAlign = 'center';
       ctx.fillText(`MAP RADIUS · ${formatDistance(radiusMeters / 1000, distanceUnit).toUpperCase()}`, cx, H - 13);
     }
-  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit, displayHeading, followingPlanetId]);
+  }, [chart, natalAsc, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit, displayHeading, followingPlanetId, flatMode, travelBearing]);
 
   const handleClick = e => {
     if (!chart) return;
