@@ -499,3 +499,18 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
 @media(prefers-reduced-motion:reduce){
   .street-planet-beacon,.street-route-line,.street-boundary,.street-lane-fill,.street-ground-tint,.street-route-label,.street-road-data,.street-game-hud,.street-beacon-orb,.street-beacon-stem,.street-digital-filter,.map-wheel-overlay,.google-map-shell .google-map{transition:none!important}
 }
+
+
+/* v3.4.0 — real Digital 3D city mode using Google Maps 3D geometry */
+.map-render-mode-switch{position:absolute;z-index:840;right:14px;top:14px;display:flex;gap:6px;padding:5px;background:rgba(3,7,18,.88);border:1px solid rgba(244,200,66,.36);border-radius:12px;backdrop-filter:blur(10px);pointer-events:auto}
+.map-render-mode-switch button{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);color:#cbd5e1;border-radius:8px;padding:8px 10px;font-size:9px;font-weight:800;letter-spacing:.04em;cursor:pointer}.map-render-mode-switch button.active{color:#fff7c2;background:rgba(244,200,66,.14);border-color:rgba(244,200,66,.65)}
+.base-map-under-3d{position:absolute!important;inset:0!important;z-index:1!important;opacity:0;pointer-events:none}
+.digital-3d-shell{position:absolute;inset:0;z-index:3;overflow:hidden;background:#030712}
+.digital-3d-host,.digital-3d-map-element{position:absolute;inset:0;width:100%;height:100%;display:block}
+.digital-3d-host{filter:contrast(1.13) saturate(.92) brightness(.83)}
+.digital-3d-grade,.digital-3d-grid{position:absolute;inset:0;pointer-events:none}
+.digital-3d-grade{z-index:5;background:radial-gradient(circle at 50% 48%,rgba(255,255,255,0) 0 34%,rgba(8,15,32,.12) 60%,rgba(3,7,18,.46) 100%),linear-gradient(180deg,rgba(14,165,233,.045),transparent 42%,rgba(168,85,247,.06));mix-blend-mode:screen}
+.digital-3d-grid{z-index:6;background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.4) 42%,#000 100%);opacity:.24}
+.digital-3d-hud{position:absolute;z-index:12;left:14px;bottom:14px;display:flex;gap:7px;max-width:calc(100% - 28px);padding:7px;background:rgba(3,7,18,.78);border:1px solid rgba(244,200,66,.34);border-radius:13px;backdrop-filter:blur(11px);pointer-events:none}.digital-3d-hud>div{padding:6px 9px;border-radius:9px;background:rgba(255,255,255,.045);min-width:110px}.digital-3d-hud small,.digital-3d-hud b{display:block}.digital-3d-hud small{font-size:7px;text-transform:uppercase;letter-spacing:.09em;color:#94a3b8}.digital-3d-hud b{font-size:10px;color:#fff}
+.digital-3d-error{position:absolute;z-index:15;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;gap:6px;width:min(430px,calc(100% - 32px));padding:16px;border:1px solid rgba(248,113,113,.45);border-radius:14px;background:rgba(18,8,14,.9);color:#fecaca;backdrop-filter:blur(12px)}.digital-3d-error b{color:#fff}.digital-3d-error span{font-size:10px;line-height:1.45}
+@media(max-width:720px){.map-render-mode-switch{top:60px;right:8px}.digital-3d-hud{right:8px;left:8px;overflow:auto}.digital-3d-hud>div{min-width:95px}}
