@@ -107,7 +107,7 @@ export default function GoogleMissionMap({
       if(cancelled||!el.current||initialized.current)return;
       mapsRef.current=maps;
       const map=new maps.Map(el.current,{
-        center:effectiveCenter,zoom:17,mapTypeId:'roadmap',streetViewControl:true,fullscreenControl:false,mapTypeControl:true,clickableIcons:true,
+        center:effectiveCenter,zoom:17,mapTypeId:'roadmap',streetViewControl:true,fullscreenControl:false,mapTypeControl:true,clickableIcons:true,gestureHandling:'greedy',scrollwheel:true,zoomControl:true,disableDoubleClickZoom:false,
         backgroundColor:'#050713',
         styles:[
           {elementType:'geometry',stylers:[{color:'#101827'}]},
@@ -141,6 +141,14 @@ export default function GoogleMissionMap({
         const lat=ev?.latLng?.lat?.(),lng=ev?.latLng?.lng?.();
         if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
         const point={lat,lng};
+        // Progressive click-to-focus: world/city view moves toward street detail without
+        // forcing a jump once the user is already at neighborhood/street zoom.
+        const currentZoom=Number(map.getZoom?.())||0;
+        map.panTo(point);
+        if(currentZoom<16){
+          const nextZoom=currentZoom<8?Math.min(10,currentZoom+3):currentZoom<13?Math.min(14,currentZoom+2):Math.min(16,currentZoom+1);
+          window.requestAnimationFrame(()=>map.setZoom(nextZoom));
+        }
         let label=`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         try{
           const geocoder=new maps.Geocoder();
@@ -235,7 +243,27 @@ export default function GoogleMissionMap({
     setTimeout(publishCityViewport,40);
   },[radiusMeters,cityRadiusMeters,cityCentered]);
 
-  useEffect(()=>{const map=mapRef.current;if(!map)return;const center=map.getCenter?.();const zoom=map.getZoom?.();const timers=[0,80,220,500].map(delay=>setTimeout(()=>{window.google?.maps?.event?.trigger(map,'resize');if(center)map.setCenter(center);if(Number.isFinite(zoom))map.setZoom(zoom);if(cityCentered&&cityCenter)map.panTo(cityCenter);else if(followUser&&location)map.panTo(location);publishCityViewport();},delay));return()=>timers.forEach(clearTimeout)},[fullscreen]);
+  useEffect(()=>{
+    const map=mapRef.current;if(!map)return;
+    const center=map.getCenter?.();
+    const zoom=map.getZoom?.();
+    let raf1=0,raf2=0,timer=0;
+    // Let the fullscreen container finish its CSS layout first. Then perform one
+    // authoritative Google Maps resize instead of several competing resizes/recenters.
+    raf1=requestAnimationFrame(()=>{
+      raf2=requestAnimationFrame(()=>{
+        window.google?.maps?.event?.trigger(map,'resize');
+        if(center)map.setCenter(center);
+        if(Number.isFinite(zoom))map.setZoom(zoom);
+        timer=setTimeout(()=>{
+          window.google?.maps?.event?.trigger(map,'resize');
+          if(center)map.setCenter(center);
+          publishCityViewport();
+        },140);
+      });
+    });
+    return()=>{cancelAnimationFrame(raf1);cancelAnimationFrame(raf2);clearTimeout(timer)};
+  },[fullscreen]);
 
   useEffect(()=>{
     if(!focusLocation||!mapRef.current)return;

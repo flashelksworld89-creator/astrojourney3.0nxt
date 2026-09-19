@@ -10,7 +10,7 @@
 /* Unified map shell */
 .mission-map-wrap,.fullscreen-map-wrap{position:relative;isolation:isolate;overflow:hidden;background:#060915}.mission-map-wrap{height:72vh;min-height:560px;border:1px solid rgba(244,200,66,.18);border-radius:20px}.fullscreen-map-wrap{position:fixed;inset:0;z-index:5000;border-radius:0}.google-map-shell,.google-map{position:absolute;inset:0;width:100%;height:100%}.google-map-shell{z-index:1}.map-error{position:absolute;z-index:50;left:12px;top:12px;background:#2b1111;color:#ffd0d0;border:1px solid #7f3333;padding:9px 11px;border-radius:10px;font-size:11px}.under-map{margin-top:14px}
 /* City mode: one wheel, one size, one visual system. */
-.map-wheel-overlay{position:absolute;z-index:220;left:50%;top:50%;width:min(var(--wheel-size,900px),96%);aspect-ratio:1/1;transform:translate(-50%,-50%);pointer-events:none;display:grid;place-items:center}.map-wheel-overlay .clean-wheel,.map-wheel-overlay .overlay-wheel{width:100%;pointer-events:none}.map-wheel-overlay .wheel-canvas.compact{display:block;width:100%;height:auto;max-width:none;pointer-events:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.66))}.map-wheel-overlay::before{content:'';position:absolute;inset:1.8%;border-radius:50%;border:1px solid rgba(255,233,166,.38);background:radial-gradient(circle,rgba(2,6,23,0) 0 55%,rgba(2,6,23,.045) 75%,rgba(2,6,23,.13) 100%);pointer-events:none}.compass-overlay-label{position:absolute;top:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:8px;letter-spacing:.16em;font-weight:800;color:var(--pale);background:rgba(3,7,18,.78);border:1px solid rgba(244,200,66,.36);border-radius:999px;padding:5px 9px}.clean-wheel{width:100%;display:flex;flex-direction:column;align-items:center}.wheel-canvas{width:min(100%,720px);height:auto;display:block;cursor:pointer;touch-action:manipulation}.wheel-canvas.compact{width:100%}.wheel-key{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;font-size:10px;color:#98a4b8;margin-top:7px}.wheel-key span{display:flex;align-items:center;gap:6px}.you-dot,.dest-dot,.transit-asc-dot,.natal-asc-dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid #fff}.you-dot,.transit-asc-dot{background:#3b82f6}.dest-dot{background:var(--gold)}.natal-asc-dot{background:#e879f9}
+.map-wheel-overlay{position:absolute;z-index:220;left:50%;top:50%;width:min(var(--wheel-size,900px),96%);aspect-ratio:1/1;transform:translate(-50%,-50%);pointer-events:none;display:grid;place-items:center}.map-wheel-overlay .clean-wheel,.map-wheel-overlay .overlay-wheel{width:100%;pointer-events:none}.map-wheel-overlay .wheel-canvas.compact{display:block;width:100%;height:auto;max-width:none;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.66))}.map-wheel-overlay::before{content:'';position:absolute;inset:1.8%;border-radius:50%;border:1px solid rgba(255,233,166,.38);background:radial-gradient(circle,rgba(2,6,23,0) 0 55%,rgba(2,6,23,.045) 75%,rgba(2,6,23,.13) 100%);pointer-events:none}.compass-overlay-label{position:absolute;top:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:8px;letter-spacing:.16em;font-weight:800;color:var(--pale);background:rgba(3,7,18,.78);border:1px solid rgba(244,200,66,.36);border-radius:999px;padding:5px 9px}.clean-wheel{width:100%;display:flex;flex-direction:column;align-items:center}.wheel-canvas{width:min(100%,720px);height:auto;display:block;cursor:pointer;touch-action:manipulation}.wheel-canvas.compact{width:100%}.wheel-key{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;font-size:10px;color:#98a4b8;margin-top:7px}.wheel-key span{display:flex;align-items:center;gap:6px}.you-dot,.dest-dot,.transit-asc-dot,.natal-asc-dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid #fff}.you-dot,.transit-asc-dot{background:#3b82f6}.dest-dot{background:var(--gold)}.natal-asc-dot{background:#e879f9}
 /* Controls */
 .fullscreen-button,.street-compass-controls,.planet-follow-panel,.city-center-hud,.map-scale-panel,.map-tracking-overlay,.map-location-search,.map-selected-location{position:absolute;z-index:820;pointer-events:auto}.fullscreen-button{right:12px;top:12px;display:flex;align-items:center;gap:6px;background:rgba(3,7,18,.9);border:1px solid rgba(244,200,66,.4);color:var(--pale);border-radius:11px;padding:9px 11px}.map-scale-panel{right:12px;bottom:12px;width:min(330px,calc(100% - 24px));padding:10px 11px;border-radius:13px;background:rgba(3,7,18,.86);border:1px solid rgba(244,200,66,.28);backdrop-filter:blur(10px)}.scale-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px}.scale-topline strong{font-family:Cinzel,serif;color:var(--gold)}.scale-row{display:grid;grid-template-columns:1fr 92px;gap:8px;align-items:center;margin-top:7px}.scale-row input{width:100%;accent-color:var(--gold)}.scale-row select{width:100%;background:#090d25;color:#eef3ff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:6px}.scale-presets{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.scale-presets button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:5px 7px;font-size:9px}.scale-note{margin-top:6px;color:#8793a7;font-size:8px}.map-tracking-overlay{left:12px;bottom:12px;width:min(340px,calc(100% - 24px))}.tracking-panel{background:rgba(3,7,18,.88);border:1px solid rgba(244,200,66,.24);border-radius:13px;padding:9px 10px;backdrop-filter:blur(8px)}.tracking-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px}.tracking-head strong{display:flex;gap:5px;color:var(--gold)}.tracking-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}.tracking-modes button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);border-radius:8px;padding:7px 5px;font-size:9px}.tracking-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#8f9bb0;font-size:8px;margin-top:6px}.tracking-note,.tracking-error{font-size:8px;margin-top:5px}.tracking-note{color:#727f94}.tracking-error{color:#f5a4a4}.tracking-live,.tracking-off{font-size:9px;border-radius:999px;padding:3px 6px}.tracking-live{color:#b9efc0;background:rgba(69,180,95,.12)}.tracking-off{color:#f5b4b4;background:rgba(190,70,70,.10)}
 .map-location-search{top:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;width:min(560px,calc(100% - 390px))}.map-location-search input{flex:1;min-width:0;height:42px;border:1px solid rgba(244,200,66,.36);border-radius:12px;background:rgba(3,7,18,.9);color:#fff;padding:0 14px;font-size:15px}.map-location-search button,.map-selected-location button{border:1px solid rgba(244,200,66,.42);background:rgba(16,24,39,.94);color:#f8e9ae;border-radius:10px;padding:9px 12px;font-weight:700}.map-selected-location{left:50%;bottom:18px;transform:translateX(-50%);width:min(760px,calc(100% - 32px));padding:12px 14px;border:1px solid rgba(244,200,66,.35);border-radius:14px;background:rgba(3,7,18,.92);backdrop-filter:blur(12px)}.map-selected-location>div:first-child{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}.map-selected-location small{color:#aab5c7}.map-selected-location b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.map-selected-actions{display:flex;gap:8px;flex-wrap:wrap}.map-selected-actions .quiet{margin-left:auto}.city-center-hud{right:12px;top:60px;display:grid;gap:3px;padding:8px 10px;border-radius:10px;background:rgba(3,7,18,.78);border:1px solid rgba(244,200,66,.25);font-size:9px}.city-center-hud small{color:#8f9bb0}.city-center-hud b{color:var(--pale)}
@@ -21,3 +21,190 @@
 @media(max-width:900px){.layout.top,.layout.main{grid-template-columns:1fr}.mission-map-wrap{height:64vh;min-height:500px}.app{padding:12px 10px 70px}.header h1,.mission-header h1{font-size:20px}.forecast-grid{grid-template-columns:1fr}.lords-grid{grid-template-columns:1fr}.map-location-search{left:10px;right:84px;transform:none;width:auto}.map-scale-panel{display:none}.map-wheel-overlay.street-upright{width:min(330px,70vw)!important;right:6px}.nak-explorer{left:6px;top:62px;bottom:118px}.nak-explorer.open{width:min(330px,calc(100% - 12px))}.nak-explorer-note{display:none}.street-game-hud{left:8px;right:8px;overflow:auto}.street-road-title b{font-size:27px}.street-beacon-orb{width:50px;height:50px;font-size:28px}.natal-proof-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:620px){.map-location-search{right:8px;top:58px}.fullscreen-button{top:10px}.city-center-hud{display:none}.map-tracking-overlay{left:8px;bottom:8px;width:calc(100% - 16px)}.mission-map-wrap{min-height:520px}.nak-explorer{top:110px}.street-compass-controls{top:106px}.street-road-title{bottom:28%}.map-selected-actions button{flex:1 1 44%}.wheel-key{font-size:9px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* v3.5.1 interactive map + fullscreen stability */
+.google-map{touch-action:none}
+.google-map-shell{overscroll-behavior:contain}
+.map-wheel-overlay{transition:opacity .16s ease, transform .16s ease, width .16s ease}
+.map-transitioning .map-wheel-overlay{opacity:0!important;visibility:hidden!important}
+.map-transitioning .nak-explorer,.map-transitioning .map-location-search,.map-transitioning .map-selected-location,.map-transitioning .map-scale-panel,.map-transitioning .map-tracking-overlay,.map-transitioning .city-center-hud,.map-transitioning .street-compass-controls,.map-transitioning .planet-follow-panel{opacity:.55;pointer-events:none}
+.fullscreen-button:disabled{opacity:.65;cursor:wait}
+.fullscreen-map-wrap{width:100vw;height:100vh;contain:layout paint;will-change:contents}
+.mission-map-wrap{contain:layout paint}
+
+/* v3.5.2 — authoritative HUD placement grid */
+.mission-map-wrap,.fullscreen-map-wrap{
+  --hud-gap:12px;
+  --hud-top:12px;
+  --hud-side:12px;
+  --hud-left-rail:360px;
+  --hud-right-rail:344px;
+}
+
+/* Top-center: location search */
+.map-location-search{
+  top:var(--hud-top)!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translateX(-50%)!important;
+  width:min(560px,calc(100% - 760px))!important;
+  min-width:320px;
+  z-index:900!important;
+}
+
+/* Top-left: Nakshatra Explorer */
+.nak-explorer{
+  left:var(--hud-side)!important;
+  top:66px!important;
+  bottom:118px!important;
+  right:auto!important;
+  z-index:880!important;
+}
+.nak-explorer.open{width:min(350px,calc(100% - 24px))!important}
+
+/* Top-right rail */
+.fullscreen-button{
+  top:var(--hud-top)!important;
+  right:var(--hud-side)!important;
+  left:auto!important;
+  bottom:auto!important;
+  z-index:930!important;
+}
+.city-center-hud{
+  top:58px!important;
+  right:var(--hud-side)!important;
+  left:auto!important;
+  bottom:auto!important;
+  width:min(300px,calc(100% - 24px));
+  z-index:860!important;
+}
+.street-compass-controls{
+  top:58px!important;
+  right:var(--hud-side)!important;
+  left:auto!important;
+  bottom:auto!important;
+  z-index:910!important;
+}
+.planet-follow-panel{
+  top:132px!important;
+  right:var(--hud-side)!important;
+  left:auto!important;
+  bottom:auto!important;
+  z-index:905!important;
+}
+
+/* Bottom-left: tracking */
+.map-tracking-overlay{
+  left:var(--hud-side)!important;
+  bottom:var(--hud-side)!important;
+  right:auto!important;
+  top:auto!important;
+  width:min(340px,calc(100% - 24px))!important;
+  z-index:890!important;
+}
+
+/* Bottom-right: scale */
+.map-scale-panel{
+  right:var(--hud-side)!important;
+  bottom:var(--hud-side)!important;
+  left:auto!important;
+  top:auto!important;
+  width:min(330px,calc(100% - 24px))!important;
+  z-index:890!important;
+}
+
+/* Bottom-center: selected-location action tray */
+.map-selected-location{
+  left:50%!important;
+  right:auto!important;
+  bottom:var(--hud-side)!important;
+  top:auto!important;
+  transform:translateX(-50%)!important;
+  width:min(640px,calc(100% - 740px))!important;
+  min-width:360px;
+  z-index:920!important;
+}
+
+/* Street mode bottom-right status; keep clear of tracking */
+.street-game-hud{
+  left:auto!important;
+  right:var(--hud-side)!important;
+  bottom:var(--hud-side)!important;
+  top:auto!important;
+  max-width:min(620px,calc(100% - 390px))!important;
+  z-index:900!important;
+}
+
+/* Street mode hides scale panel; local path HUD gets that corner. */
+.mission-map-wrap:has(.street-game-overlay) .map-scale-panel,
+.fullscreen-map-wrap:has(.street-game-overlay) .map-scale-panel{display:none!important}
+
+/* Keep center graphics unobstructed. */
+.flat-travel-hud{
+  left:50%!important;
+  right:auto!important;
+  bottom:86px!important;
+  top:auto!important;
+  transform:translateX(-50%)!important;
+  width:min(760px,calc(100% - 760px))!important;
+  z-index:895!important;
+}
+
+/* Fullscreen uses the same HUD geometry; only canvas/map grows. */
+.fullscreen-map-wrap .map-location-search,
+.fullscreen-map-wrap .map-selected-location,
+.fullscreen-map-wrap .nak-explorer,
+.fullscreen-map-wrap .map-tracking-overlay,
+.fullscreen-map-wrap .map-scale-panel,
+.fullscreen-map-wrap .fullscreen-button,
+.fullscreen-map-wrap .street-compass-controls,
+.fullscreen-map-wrap .planet-follow-panel,
+.fullscreen-map-wrap .street-game-hud{position:absolute!important}
+
+@media(max-width:1180px){
+  .map-location-search{width:min(470px,calc(100% - 430px))!important;min-width:300px}
+  .map-selected-location{width:min(560px,calc(100% - 400px))!important;min-width:320px;bottom:94px!important}
+  .map-scale-panel{display:none!important}
+  .street-game-hud{max-width:calc(100% - 380px)!important}
+}
+
+@media(max-width:900px){
+  .mission-map-wrap,.fullscreen-map-wrap{--hud-side:8px;--hud-top:8px}
+  .map-location-search{
+    top:8px!important;
+    left:54px!important;
+    right:86px!important;
+    width:auto!important;
+    min-width:0!important;
+    transform:none!important;
+  }
+  .fullscreen-button{top:8px!important;right:8px!important}
+  .nak-explorer{left:8px!important;top:60px!important;bottom:126px!important}
+  .nak-explorer.open{width:min(330px,calc(100% - 16px))!important}
+  .city-center-hud{display:none!important}
+  .street-compass-controls{top:60px!important;right:8px!important}
+  .planet-follow-panel{top:134px!important;right:8px!important}
+  .map-tracking-overlay{left:8px!important;bottom:8px!important;width:min(320px,calc(100% - 16px))!important}
+  .map-selected-location{
+    left:8px!important;
+    right:8px!important;
+    bottom:112px!important;
+    width:auto!important;
+    min-width:0!important;
+    transform:none!important;
+  }
+  .street-game-hud{left:8px!important;right:8px!important;bottom:8px!important;max-width:none!important;width:auto!important}
+  .flat-travel-hud{left:8px!important;right:8px!important;bottom:84px!important;width:auto!important;transform:none!important}
+}
+
+@media(max-width:620px){
+  .map-location-search{top:58px!important;left:8px!important;right:8px!important}
+  .nak-explorer{top:110px!important;bottom:138px!important}
+  .street-compass-controls{top:110px!important;right:8px!important}
+  .planet-follow-panel{top:184px!important;right:8px!important;max-width:230px}
+  .map-selected-location{bottom:142px!important}
+  .map-tracking-overlay{bottom:8px!important;width:calc(100% - 16px)!important}
+  .street-game-hud{bottom:8px!important}
+}
