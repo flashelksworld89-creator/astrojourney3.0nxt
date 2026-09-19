@@ -50,7 +50,8 @@ export default function StreetGameOverlay({
   followedPlanet,
   followedBearing,
   followedZone,
-  onStopFollowing
+  onStopFollowing,
+  depthMeters=1609.344
 }){
   const smoothHeading=useSmoothedAngle(heading,active);
   const activeNak=currentZone?.nakshatra||followedZone?.nakshatra||null;
@@ -59,7 +60,7 @@ export default function StreetGameOverlay({
   const relative=Number.isFinite(Number(followedBearing))?signedAngle(followedBearing,smoothHeading):0;
   const beaconX=Math.max(12,Math.min(88,50+(relative/75)*38));
   const visibleAhead=Math.abs(relative)<=92;
-  const lineAngle=Math.max(-36,Math.min(36,relative*.42));
+  const lineAngle=Math.max(-18,Math.min(18,relative*.20));
   const laneName=activeNak?.name||'Current Nakshatra';
   const planetNak=followedPlanet?.nakshatra||followedZone?.nakshatra||null;
 
@@ -69,7 +70,8 @@ export default function StreetGameOverlay({
     '--nak-mid':hexToRgba(color,.42),
     '--nak-strong':hexToRgba(color,.82),
     '--beacon-x':`${beaconX}%`,
-    '--route-angle':`${lineAngle}deg`
+    '--route-angle':`${lineAngle}deg`,
+    '--road-depth-label':`${(Number(depthMeters)/1609.344).toFixed(1)} mi`
   }),[color,beaconX,lineAngle]);
 
   if(!active)return null;
@@ -77,10 +79,6 @@ export default function StreetGameOverlay({
   return <div className="street-game-overlay" style={vars} aria-hidden="true">
     <div className="street-sky-vignette"/>
     <div className="street-ground-tint"/>
-    <div className="street-digital-city street-digital-city-left" aria-hidden="true"><span/><span/><span/><span/></div>
-    <div className="street-digital-city street-digital-city-right" aria-hidden="true"><span/><span/><span/><span/></div>
-    <div className="street-digital-cars" aria-hidden="true"><i className="car car-a"/><i className="car car-b"/><i className="car car-c"/></div>
-    <div className="street-digital-people" aria-hidden="true"><i className="person person-a"/><i className="person person-b"/><i className="person person-c"/></div>
     <div className="street-perspective-field">
       <div className="street-lane-fill"/>
       <div className="street-boundary street-boundary-left"/>
@@ -90,7 +88,7 @@ export default function StreetGameOverlay({
       <div className="street-route-pulse street-route-pulse-b"/>
       <div className="street-route-label">
         <strong>{laneName}</strong>
-        <span>HOUSE {currentZone?.house||'—'} · {cardinal(smoothHeading)} {norm(smoothHeading).toFixed(0)}°</span>
+        <span>HOUSE {currentZone?.house||'—'} · {cardinal(smoothHeading)} {norm(smoothHeading).toFixed(0)}° · 1 MILE FIELD</span>
       </div>
       <div className="street-road-data">
         {followedPlanet?<>
@@ -114,7 +112,7 @@ export default function StreetGameOverlay({
 
     <div className="street-game-hud" aria-hidden="false">
       <div><small>Current field</small><b>{laneName}</b></div>
-      <div><small>Mode</small><b>Digitized Street</b></div>
+      <div><small>Path depth</small><b>{(Number(depthMeters)/1609.344).toFixed(1)} mile</b></div>
       <div><small>Travel house</small><b>House {currentZone?.house||'—'}</b></div>
       <div><small>Following</small><b>{followedPlanet?`${followedPlanet.glyph} ${followedPlanet.name}`:'No planet selected'}</b></div>
       {followedPlanet&&<button type="button" onClick={onStopFollowing}>Stop</button>}

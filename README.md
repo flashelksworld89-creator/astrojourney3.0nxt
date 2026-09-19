@@ -28,16 +28,20 @@ The Swiss Ephemeris sidereal calculation engine, Street View Flat/Upright mode, 
 - Zodiac, house, transit, natal and angle layers remain aligned above the city-wide nakshatra field.
 
 
-## v3.4.1 Deployment Repair
+## v3.4.2 Deployment Repair
 - Rewrites malformed literal `\n` sequences in `app/globals.css` as real line breaks.
 - Preserves the full-city 27-wedge nakshatra blanket introduced in v3.3.1.
 - Preserves dark city-map styling, city-radius screen scaling, transit/natal layers, and geographic user projection.
 - Source files were syntax-parsed after repair.
 
 
-## 3.4.1 — Digital Street + Map Locations
+## 3.4.2 — Digital Street + Map Locations
 - Search addresses, landmarks, cities, or coordinates from inside the map.
 - Click/tap the map to select a point.
 - Selected points can be used as Current Location, Destination, or opened directly in Street View.
 - Setting Current Location switches tracking to Static so GPS does not immediately override the chosen planning location.
 - Street View receives a darker, higher-contrast digitized treatment beneath the existing nakshatra road/game overlay.
+
+
+## v3.4.2 Wide Nakshatra Road
+Digital 3D mode removed. Street View now uses a wide, road-aligned nakshatra pavement field with a fixed 1-mile inner-to-outer depth.

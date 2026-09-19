@@ -453,40 +453,6 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
 .map-selected-location-hud{z-index:820!important}
 
 
-/* v3.3.5 Digitized Street View mode */
-.google-map-shell{position:relative}
-.google-map-shell.street-digital-shell .google-map{filter:contrast(1.12) saturate(.82) brightness(.88) hue-rotate(-8deg);}
-.street-digital-filter,.street-digital-scanlines,.street-digital-vignette{position:absolute;inset:0;pointer-events:none;z-index:4}
-.street-digital-filter{background:
-  radial-gradient(circle at 50% 58%, rgba(17,24,39,0) 0 26%, rgba(16,185,129,.06) 38%, rgba(59,130,246,.08) 55%, rgba(12,18,34,.24) 100%),
-  linear-gradient(180deg, rgba(34,197,94,.05), rgba(14,165,233,.08) 45%, rgba(168,85,247,.08) 100%);
-  mix-blend-mode:screen;backdrop-filter:contrast(1.08) saturate(.88);}
-.street-digital-scanlines{background:repeating-linear-gradient(180deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,0) 1px 5px);opacity:.18;mix-blend-mode:soft-light}
-.street-digital-vignette{background:radial-gradient(circle at 50% 55%, rgba(255,255,255,0) 0 35%, rgba(5,7,20,.22) 62%, rgba(5,7,20,.58) 100%)}
-
-.street-game-overlay{--digit-line:rgba(255,255,255,.22)}
-.street-digital-city,.street-digital-cars,.street-digital-people{position:absolute;inset:0;pointer-events:none;z-index:2}
-.street-digital-city span{position:absolute;bottom:36%;display:block;border:1px solid rgba(255,255,255,.18);background:linear-gradient(180deg, rgba(148,163,184,.18), rgba(15,23,42,.36));box-shadow:0 0 18px rgba(255,255,255,.04), inset 0 0 18px rgba(255,255,255,.03)}
-.street-digital-city span::before{content:'';position:absolute;inset:8% 12%;background:repeating-linear-gradient(180deg, rgba(255,255,255,.18) 0 2px, rgba(0,0,0,0) 2px 10px), repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 2px, rgba(0,0,0,0) 2px 11px);opacity:.45}
-.street-digital-city-left span:nth-child(1){left:3%;width:10%;height:28%}.street-digital-city-left span:nth-child(2){left:12%;width:9%;height:22%}.street-digital-city-left span:nth-child(3){left:20%;width:11%;height:32%}.street-digital-city-left span:nth-child(4){left:30%;width:9%;height:18%}
-.street-digital-city-right span:nth-child(1){right:4%;width:10%;height:26%}.street-digital-city-right span:nth-child(2){right:14%;width:9%;height:18%}.street-digital-city-right span:nth-child(3){right:22%;width:11%;height:34%}.street-digital-city-right span:nth-child(4){right:32%;width:9%;height:21%}
-.street-digital-cars .car,.street-digital-people .person{position:absolute;display:block;filter:drop-shadow(0 0 6px rgba(255,255,255,.15))}
-.street-digital-cars .car{width:4.6%;height:2.2%;border:1px solid rgba(255,255,255,.25);background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(15,23,42,.36));border-radius:6px 6px 3px 3px}
-.street-digital-cars .car::before,.street-digital-cars .car::after{content:'';position:absolute;bottom:-2px;width:18%;height:38%;background:rgba(255,255,255,.32);border-radius:50%}
-.street-digital-cars .car::before{left:12%}.street-digital-cars .car::after{right:12%}
-.street-digital-cars .car-a{left:40%;bottom:26%;transform:perspective(400px) rotateX(68deg)}
-.street-digital-cars .car-b{left:28%;bottom:22%;transform:perspective(400px) rotateX(68deg) scale(.92)}
-.street-digital-cars .car-c{right:27%;bottom:18%;transform:perspective(400px) rotateX(68deg) scale(1.06)}
-.street-digital-people .person{width:1.3%;height:4.8%;border:1px solid rgba(255,255,255,.28);border-radius:999px 999px 6px 6px;background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(15,23,42,.34))}
-.street-digital-people .person::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:-28%;width:72%;height:30%;border-radius:50%;background:rgba(255,255,255,.28)}
-.street-digital-people .person-a{left:18%;bottom:20%}.street-digital-people .person-b{right:18%;bottom:24%}.street-digital-people .person-c{right:12%;bottom:18%;transform:scale(.9)}
-.street-perspective-field{z-index:3}
-.street-ground-tint{opacity:.74}
-.street-route-line{box-shadow:0 0 14px var(--nak-mid), 0 0 38px var(--nak-strong)}
-.street-boundary{box-shadow:0 0 10px rgba(255,255,255,.08), 0 0 24px var(--nak-mid)}
-.street-route-label,.street-road-data,.street-game-hud,.street-planet-beacon .street-beacon-card{backdrop-filter:blur(10px) saturate(1.05);background:rgba(4,8,20,.72)!important;border-color:rgba(255,255,255,.16)!important}
-
-
 /* v3.3.6 Smooth motion pass */
 .street-planet-beacon{transition:left .48s cubic-bezier(.22,.8,.2,1),opacity .34s ease,transform .34s ease!important;will-change:left,transform,opacity}
 .street-route-line{transition:transform .42s cubic-bezier(.22,.8,.2,1),box-shadow .45s ease,background .45s ease;will-change:transform}
@@ -501,27 +467,46 @@ label{display:block;color:#9aa7bc;font-size:10px;margin-top:7px}.segmented{displ
 }
 
 
-/* v3.4.0 — real Digital 3D city mode using Google Maps 3D geometry */
-.map-render-mode-switch{position:absolute;z-index:840;right:14px;top:14px;display:flex;gap:6px;padding:5px;background:rgba(3,7,18,.88);border:1px solid rgba(244,200,66,.36);border-radius:12px;backdrop-filter:blur(10px);pointer-events:auto}
-.map-render-mode-switch button{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);color:#cbd5e1;border-radius:8px;padding:8px 10px;font-size:9px;font-weight:800;letter-spacing:.04em;cursor:pointer}.map-render-mode-switch button.active{color:#fff7c2;background:rgba(244,200,66,.14);border-color:rgba(244,200,66,.65)}
-.base-map-under-3d{position:absolute!important;inset:0!important;z-index:1!important;opacity:0;pointer-events:none}
-.digital-3d-shell{position:absolute;inset:0;z-index:3;overflow:hidden;background:#030712}
-.digital-3d-host,.digital-3d-map-element{position:absolute;inset:0;width:100%;height:100%;display:block}
-.digital-3d-host{filter:contrast(1.13) saturate(.92) brightness(.83)}
-.digital-3d-grade,.digital-3d-grid{position:absolute;inset:0;pointer-events:none}
-.digital-3d-grade{z-index:5;background:radial-gradient(circle at 50% 48%,rgba(255,255,255,0) 0 34%,rgba(8,15,32,.12) 60%,rgba(3,7,18,.46) 100%),linear-gradient(180deg,rgba(14,165,233,.045),transparent 42%,rgba(168,85,247,.06));mix-blend-mode:screen}
-.digital-3d-grid{z-index:6;background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.4) 42%,#000 100%);opacity:.24}
-.digital-3d-hud{position:absolute;z-index:12;left:14px;bottom:14px;display:flex;gap:7px;max-width:calc(100% - 28px);padding:7px;background:rgba(3,7,18,.78);border:1px solid rgba(244,200,66,.34);border-radius:13px;backdrop-filter:blur(11px);pointer-events:none}.digital-3d-hud>div{padding:6px 9px;border-radius:9px;background:rgba(255,255,255,.045);min-width:110px}.digital-3d-hud small,.digital-3d-hud b{display:block}.digital-3d-hud small{font-size:7px;text-transform:uppercase;letter-spacing:.09em;color:#94a3b8}.digital-3d-hud b{font-size:10px;color:#fff}
-.digital-3d-error{position:absolute;z-index:15;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;gap:6px;width:min(430px,calc(100% - 32px));padding:16px;border:1px solid rgba(248,113,113,.45);border-radius:14px;background:rgba(18,8,14,.9);color:#fecaca;backdrop-filter:blur(12px)}.digital-3d-error b{color:#fff}.digital-3d-error span{font-size:10px;line-height:1.45}
-@media(max-width:720px){.map-render-mode-switch{top:60px;right:8px}.digital-3d-hud{right:8px;left:8px;overflow:auto}.digital-3d-hud>div{min-width:95px}}
 
 
-/* v3.4.1 — restore compass + Street View while Digital 3D is active */
-.digital-3d-shell~.map-wheel-overlay{z-index:500!important}
-.mission-map-wrap .map-render-mode-switch,.fullscreen-map-wrap .map-render-mode-switch{z-index:900!important}
-.mission-map-wrap .fullscreen-button,.fullscreen-map-wrap .fullscreen-button{z-index:920!important}
-.mission-map-wrap .street-compass-controls,.fullscreen-map-wrap .street-compass-controls{z-index:910!important}
-.mission-map-wrap .map-location-search-hud,.fullscreen-map-wrap .map-location-search-hud,.mission-map-wrap .map-selected-location-hud,.fullscreen-map-wrap .map-selected-location-hud{z-index:905!important}
-/* Keep the astronomical wheel visible over the 3D city without blocking map gestures. */
-.digital-3d-shell~.map-wheel-overlay{pointer-events:none!important}
-.digital-3d-shell~.map-wheel-overlay .wheel-canvas{pointer-events:auto!important}
+/* v3.4.2 — wide road-aligned nakshatra pavement; no Digital 3D layer */
+.street-game-overlay{
+  z-index:640;
+}
+.street-game-overlay .street-ground-tint{
+  left:-34%;right:-34%;top:43%;bottom:-16%;
+  clip-path:polygon(34% 0,66% 0,100% 100%,0 100%);
+  background:linear-gradient(to bottom,rgba(255,255,255,.03) 0,var(--nak-soft) 16%,var(--nak-mid) 58%,var(--nak-strong) 100%);
+  mix-blend-mode:screen;
+  opacity:.86;
+  filter:saturate(1.12);
+}
+.street-perspective-field{
+  left:50%;bottom:-7%;width:min(1260px,150%);height:78%;
+  transform:translateX(-50%);
+  perspective:1100px;
+  overflow:visible;
+}
+.street-lane-fill{
+  width:118%;height:106%;
+  clip-path:polygon(35% 0,65% 0,99% 100%,1% 100%);
+  background:
+    linear-gradient(to bottom,rgba(255,255,255,.035),var(--nak-soft) 14%,var(--nak-mid) 54%,var(--nak-strong) 100%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 44px);
+  filter:drop-shadow(0 0 34px var(--nak-mid));
+}
+.street-boundary{width:4px;height:105%;opacity:.92}
+.street-boundary-left{left:1%;transform:rotate(17deg)}
+.street-boundary-right{right:1%;transform:rotate(-17deg)}
+.street-route-line{width:7px;height:112%;}
+.street-route-label{bottom:31%;}
+.street-route-label strong{font-size:clamp(28px,4.8vw,58px);}
+.street-road-data{bottom:8%;}
+.street-game-hud{border-color:var(--nak-mid)}
+.street-game-hud>div:nth-child(2) b{color:#fff7c2}
+.street-depth-ruler{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);font-size:9px;color:#fff7c2;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 2px 8px #000}
+@media(max-width:720px){
+  .street-game-overlay .street-ground-tint{left:-48%;right:-48%;top:44%}
+  .street-perspective-field{width:175%;height:76%}
+  .street-route-label strong{font-size:28px}
+}

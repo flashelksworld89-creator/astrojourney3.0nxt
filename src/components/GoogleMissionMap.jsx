@@ -27,8 +27,7 @@ export default function GoogleMissionMap({
   onCityViewportChange,
   onMapPlaceSelect,
   focusLocation,
-  streetLocation,
-  digitalStreetMode=false
+  streetLocation
 }) {
   const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef(''),userMarkerAnimRef=useRef(0);
   const [error,setError]=useState('');
@@ -240,5 +239,5 @@ export default function GoogleMissionMap({
     panoramaRef.current.setVisible(true);
   },[streetLocation?.lat,streetLocation?.lng,streetLocation?.nonce]);
 
-  return <div className={`google-map-shell ${digitalStreetMode?'street-digital-shell':''}`}>{error?<div className="map-error">{error}</div>:null}<div ref={el} className="google-map"/>{digitalStreetMode?<><div className="street-digital-filter" aria-hidden="true"/><div className="street-digital-scanlines" aria-hidden="true"/><div className="street-digital-vignette" aria-hidden="true"/></>:null}</div>;
+  return <div className="google-map-shell">{error?<div className="map-error">{error}</div>:null}<div ref={el} className="google-map"/></div>;
 }
