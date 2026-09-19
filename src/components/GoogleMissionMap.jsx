@@ -27,9 +27,10 @@ export default function GoogleMissionMap({
   onCityViewportChange,
   onMapPlaceSelect,
   focusLocation,
-  streetLocation
+  streetLocation,
+  digitalStreetMode=false
 }) {
-  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef('');
+  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef(''),userMarkerAnimRef=useRef(0);
   const [error,setError]=useState('');
 
   const effectiveCenter=cityCentered&&cityCenter?cityCenter:location;
@@ -171,7 +172,23 @@ export default function GoogleMissionMap({
 
   useEffect(()=>{
     if(!mapRef.current||!location)return;
-    userMarkerRef.current?.setPosition(location);
+    const marker=userMarkerRef.current;
+    if(marker){
+      const token=++userMarkerAnimRef.current;
+      const from=marker.getPosition?.();
+      const start=performance.now();
+      const duration=560;
+      const a=from?{lat:from.lat(),lng:from.lng()}:{lat:Number(location.lat),lng:Number(location.lng)};
+      const b={lat:Number(location.lat),lng:Number(location.lng)};
+      const step=now=>{
+        if(token!==userMarkerAnimRef.current)return;
+        const raw=Math.min(1,(now-start)/duration);
+        const eased=1-Math.pow(1-raw,3);
+        marker.setPosition({lat:a.lat+(b.lat-a.lat)*eased,lng:a.lng+(b.lng-a.lng)*eased});
+        if(raw<1)requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
     const maps=mapsRef.current;
     if(destination&&maps){
       if(!destMarkerRef.current)destMarkerRef.current=new maps.Marker({position:destination,map:mapRef.current,title:'Destination'});
@@ -223,5 +240,5 @@ export default function GoogleMissionMap({
     panoramaRef.current.setVisible(true);
   },[streetLocation?.lat,streetLocation?.lng,streetLocation?.nonce]);
 
-  return <div className="google-map-shell">{error?<div className="map-error">{error}</div>:null}<div ref={el} className="google-map"/></div>;
+  return <div className={`google-map-shell ${digitalStreetMode?'street-digital-shell':''}`}>{error?<div className="map-error">{error}</div>:null}<div ref={el} className="google-map"/>{digitalStreetMode?<><div className="street-digital-filter" aria-hidden="true"/><div className="street-digital-scanlines" aria-hidden="true"/><div className="street-digital-vignette" aria-hidden="true"/></>:null}</div>;
 }
