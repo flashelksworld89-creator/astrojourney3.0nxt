@@ -1,6 +1,6 @@
 import { calculateAspects, aspectsForPlanet, calculateTransitNatalAspects, calculateTransitHouseAspects, destinationZoneFromBearing } from './astro';
 
-export async function requestPrivateInterpretation({chart,natalChart,houseLords,origin,destination,bearing,direction,distanceKm,selectedDate,focusHouses=[],focusLords=[],relocationCurrent=[],relocationDestination=[],localSpaceContacts=[]}){
+export async function requestPrivateInterpretation({chart,natalChart,houseLords,origin,destination,bearing,direction,distanceKm,selectedDate,focusHouses=[],focusLords=[],relocationCurrent=[],relocationDestination=[],localSpaceContacts=[],routeContext=null}){
   if(!chart?.planets?.length||!natalChart?.planets?.length)return null;
   const transitAspects=calculateAspects(chart.planets);
   const transitNatalAspects=calculateTransitNatalAspects(chart.planets,natalChart.planets);
@@ -16,7 +16,7 @@ export async function requestPrivateInterpretation({chart,natalChart,houseLords,
     date:selectedDate?.toISOString?.()||String(selectedDate||''),
     origin:{lat:origin?.lat,lng:origin?.lng},destination:{lat:destination?.lat,lng:destination?.lng},bearing,direction,distanceKm,
     destinationZone:zone,planets,natalPlanets,houseLords,transitNatalAspects,natalHouseAspects,
-    natalAsc:natalChart.asc,natalHouseCusps:natalChart.houseCusps,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts
+    natalAsc:natalChart.asc,natalHouseCusps:natalChart.houseCusps,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts,routeContext
   })});
   if(!response.ok)throw new Error('Private interpretation service unavailable');
   return response.json();
