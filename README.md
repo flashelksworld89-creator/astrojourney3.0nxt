@@ -1,6 +1,15 @@
-# AstroWalk Journey 3.6.0 — Transit Focus + Location Astrology
+# AstroWalk Journey 3.6.1 — Route Navigation + Street Lock
 
 This build keeps the 3.5.2 map/compass/HUD baseline and adds:
+
+## 3.6.1 navigation additions
+
+- Live current date/time widget, separate from the selectable Journey Time.
+- Collapsible Wheel Radius control moved to the left rail above Nakshatra Explorer.
+- Street View automatically opens in Flat mode; the pavement plane follows Street View road links and camera pitch so it remains aligned to street level while moving/looking around.
+- Selecting a planet generates a Google road-route report to the destination with street-by-street steps, distance, duration, ETA from the selected Journey Time, start/end house-sign-nakshatra fields, house/nakshatra crossings, and emphasized gandanta crossings.
+- Route field analysis samples the actual road path through the city-centered sidereal wheel.
+
 
 - Date-sensitive Transit Positions panel. Past/future Journey Time selections recalculate the displayed sidereal transits automatically.
 - Default interpretation emphasis on the natal 1st lord (self), 3rd lord (communication / short travel), and 7th lord (others / contracts / business relationships).

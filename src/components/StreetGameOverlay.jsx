@@ -5,7 +5,7 @@ const norm=n=>((Number(n)%360)+360)%360;
 const signed=(a,b)=>((norm(a)-norm(b)+540)%360)-180;
 const cardinal=b=>['N','NE','E','SE','S','SW','W','NW'][Math.round(norm(b)/45)%8];
 
-export default function StreetGameOverlay({active,heading=0,roadBearing=null,currentZone,currentBearing,depthMeters=1609.344,followedPlanet,followedBearing,followedZone,onStopFollowing}){
+export default function StreetGameOverlay({active,heading=0,pitch=0,roadBearing=null,currentZone,currentBearing,depthMeters=1609.344,followedPlanet,followedBearing,followedZone,onStopFollowing}){
   if(!active)return null;
   const nak=currentZone?.nakshatra||followedZone?.nakshatra||null;
   const idx=Math.max(0,Math.min(26,Number(nak?.index??nak?.number-1??0)));
@@ -17,6 +17,7 @@ export default function StreetGameOverlay({active,heading=0,roadBearing=null,cur
   const planetRel=Number.isFinite(Number(followedBearing))?signed(followedBearing,heading):0;
   const beaconX=Math.max(90,Math.min(910,500+(planetRel/85)*390));
   const routeEndX=Math.max(180,Math.min(820,500+(planetRel/85)*260));
+  const horizonY=Math.max(150,Math.min(275,210+Number(pitch||0)*2.2));
   const depthMi=(Number(depthMeters)/1609.344).toFixed(1);
   const vars=useMemo(()=>({'--nak-color':color}),[color]);
 
@@ -27,11 +28,11 @@ export default function StreetGameOverlay({active,heading=0,roadBearing=null,cur
         <linearGradient id="routeGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".28"/><stop offset=".45" stopColor={color} stopOpacity=".95"/><stop offset="1" stopColor="#fff7c2" stopOpacity="1"/></linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <polygon points={`${vanishX-35},210 ${vanishX+35},210 980,600 20,600`} fill="url(#roadFill)"/>
-      <polyline points={`${vanishX-35},210 20,600`} className="road-edge"/>
-      <polyline points={`${vanishX+35},210 980,600`} className="road-edge"/>
-      {[.18,.34,.52,.72,.9].map((t,i)=>{const y=210+(600-210)*t*t;const half=35+(480-35)*t*t;return <line key={i} x1={vanishX-half} y1={y} x2={vanishX+half} y2={y} className="road-depth"/>})}
-      {followedPlanet&&<><line x1="500" y1="600" x2={routeEndX} y2="218" stroke="rgba(2,6,23,.78)" strokeWidth="18"/><line x1="500" y1="600" x2={routeEndX} y2="218" stroke="url(#routeGlow)" strokeWidth="7" filter="url(#glow)"/></>}
+      <polygon points={`${vanishX-35},${horizonY} ${vanishX+35},${horizonY} 980,600 20,600`} fill="url(#roadFill)"/>
+      <polyline points={`${vanishX-35},${horizonY} 20,600`} className="road-edge"/>
+      <polyline points={`${vanishX+35},${horizonY} 980,600`} className="road-edge"/>
+      {[.18,.34,.52,.72,.9].map((t,i)=>{const y=horizonY+(600-horizonY)*t*t;const half=35+(480-35)*t*t;return <line key={i} x1={vanishX-half} y1={y} x2={vanishX+half} y2={y} className="road-depth"/>})}
+      {followedPlanet&&<><line x1="500" y1="600" x2={routeEndX} y2={horizonY+8} stroke="rgba(2,6,23,.78)" strokeWidth="18"/><line x1="500" y1="600" x2={routeEndX} y2={horizonY+8} stroke="url(#routeGlow)" strokeWidth="7" filter="url(#glow)"/></>}
     </svg>
     <div className="street-road-title"><b>{nak?.name||'Current Nakshatra'}</b><span>HOUSE {currentZone?.house||'—'} · {depthMi} MILE FIELD</span></div>
     {followedPlanet&&<div className="street-planet-beacon" style={{left:`${beaconX/10}%`}}><div className="street-beacon-card"><b>{followedPlanet.glyph} {followedPlanet.name}</b><span>{followedBearing?.toFixed?.(0)}° {cardinal(followedBearing)}</span><small>{followedPlanet.sign} {Number(followedPlanet.degree||0).toFixed(1)}° · H{followedPlanet.house||followedZone?.house||'—'}</small></div><div className="street-beacon-orb">{followedPlanet.glyph}</div><div className="street-beacon-stem"/></div>}

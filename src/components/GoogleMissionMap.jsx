@@ -29,9 +29,11 @@ export default function GoogleMissionMap({
   onMapPlaceSelect,
   focusLocation,
   streetLocation,
-  highlightRoad=null
+  highlightRoad=null,
+  travelMode='walk',
+  onRouteUpdate
 }) {
-  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),highlightRoadRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef(''),userMarkerAnimRef=useRef(0);
+  const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),highlightRoadRef=useRef(null),directionsRendererRef=useRef(null),directionsServiceRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef(''),userMarkerAnimRef=useRef(0);
   const [error,setError]=useState('');
 
   const effectiveCenter=cityCentered&&cityCenter?cityCenter:location;
@@ -132,6 +134,8 @@ export default function GoogleMissionMap({
       userMarkerRef.current=new maps.Marker({position:location,map,title:'You are here',zIndex:30,icon:{path:maps.SymbolPath.CIRCLE,scale:8,fillColor:'#2563eb',fillOpacity:1,strokeColor:'#ffffff',strokeWeight:2}});
       analysisMarkerRef.current=new maps.Marker({position:analysisLocation||location,map,title:'Astrology calculation position',zIndex:25,icon:{path:maps.SymbolPath.CIRCLE,scale:4,fillColor:'#F4C842',fillOpacity:.9,strokeColor:'#171717',strokeWeight:1}});
       if(destination){destMarkerRef.current=new maps.Marker({position:destination,map,title:'Destination'});routeRef.current=new maps.Polyline({path:[location,destination],map,geodesic:true,strokeColor:'#ffffff',strokeOpacity:.72,strokeWeight:3});}
+      directionsServiceRef.current=new maps.DirectionsService();
+      directionsRendererRef.current=new maps.DirectionsRenderer({map,suppressMarkers:true,preserveViewport:true,polylineOptions:{strokeColor:'#FFF7C2',strokeOpacity:.9,strokeWeight:5,zIndex:18}});
 
       maps.event.addListener(map,'zoom_changed',()=>setTimeout(publishCityViewport,0));
       maps.event.addListener(map,'idle',publishCityViewport);
@@ -179,6 +183,8 @@ export default function GoogleMissionMap({
         };
         maps.event.addListener(panorama,'visible_changed',publish);
         maps.event.addListener(panorama,'pov_changed',publish);
+        maps.event.addListener(panorama,'position_changed',publish);
+        maps.event.addListener(panorama,'links_changed',publish);
         publish();
       }
 
@@ -277,6 +283,30 @@ export default function GoogleMissionMap({
     panoramaRef.current.setPov({heading:0,pitch:0});
     panoramaRef.current.setVisible(true);
   },[streetLocation?.lat,streetLocation?.lng,streetLocation?.nonce]);
+
+
+  useEffect(()=>{
+    const maps=mapsRef.current,map=mapRef.current,service=directionsServiceRef.current,renderer=directionsRendererRef.current;
+    if(!maps||!map||!service||!renderer||!location||!destination){onRouteUpdate?.(null);return;}
+    const mode=travelMode==='drive'?maps.TravelMode.DRIVING:maps.TravelMode.WALKING;
+    let cancelled=false;
+    service.route({origin:location,destination,travelMode:mode,provideRouteAlternatives:false},(result,status)=>{
+      if(cancelled)return;
+      if(status!==maps.DirectionsStatus.OK||!result?.routes?.length){
+        renderer.set('directions',null);
+        onRouteUpdate?.({error:`Road directions unavailable (${status||'unknown'}).`,status:'FALLBACK'});
+        return;
+      }
+      renderer.setDirections(result);
+      routeRef.current?.setMap(null);
+      const route=result.routes[0],leg=route.legs?.[0];
+      const path=(route.overview_path||[]).map(p=>({lat:p.lat(),lng:p.lng()}));
+      const steps=(leg?.steps||[]).map(s=>({instruction:s.instructions||'',distanceMeters:Number(s.distance?.value)||0,durationSeconds:Number(s.duration?.value)||0,start:{lat:s.start_location.lat(),lng:s.start_location.lng()},end:{lat:s.end_location.lat(),lng:s.end_location.lng()}}));
+      const streets=[...new Set(steps.map(s=>String(s.instruction).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean))].slice(0,18);
+      onRouteUpdate?.({status:'ROUTED',path,streets,leg:{distanceMeters:Number(leg?.distance?.value)||0,durationSeconds:Number(leg?.duration?.value)||0,startAddress:leg?.start_address||'',endAddress:leg?.end_address||'',steps}});
+    });
+    return()=>{cancelled=true};
+  },[location?.lat,location?.lng,destination?.lat,destination?.lng,travelMode]);
 
   useEffect(()=>{
     const maps=mapsRef.current,map=mapRef.current;

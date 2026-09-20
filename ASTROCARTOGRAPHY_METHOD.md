@@ -1,4 +1,4 @@
-# AstroWalk location-astrology method (v3.6.0)
+# AstroWalk location-astrology method (v3.6.1)
 
 This app keeps three layers separate and combines them only at interpretation time:
 

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ChevronDown, ChevronUp, Ruler } from 'lucide-react';
 const UNITS = {
   ft: { label:'Feet', toMeters:v=>v*0.3048, fromMeters:m=>m/0.3048, min:100, max:10000, step:50 },
   yd: { label:'Yards', toMeters:v=>v*0.9144, fromMeters:m=>m/0.9144, min:50, max:5000, step:25 },
@@ -21,6 +23,7 @@ function pretty(value, unit) {
 }
 
 export default function MapScaleControls({radiusMeters, unit, onUnitChange, onRadiusChange}) {
+  const [open,setOpen]=useState(false);
   const cfg=UNITS[unit]||UNITS.ft;
   const raw=cfg.fromMeters(radiusMeters);
   const value=Math.min(cfg.max,Math.max(cfg.min,raw));
@@ -32,11 +35,12 @@ export default function MapScaleControls({radiusMeters, unit, onUnitChange, onRa
   };
 
   return (
-    <div className="map-scale-panel" aria-label="Wheel geographic scale">
-      <div className="scale-topline">
-        <strong>Wheel radius</strong>
-        <span>{pretty(raw,unit)} {unit}</span>
-      </div>
+    <div className={`map-scale-panel ${open?'open':'collapsed'}`} aria-label="Wheel geographic scale">
+      <button type="button" className="scale-collapse" onClick={()=>setOpen(v=>!v)} aria-expanded={open}>
+        <span><Ruler size={14}/><strong>Wheel radius</strong></span>
+        <span>{pretty(raw,unit)} {unit} {open?<ChevronUp size={14}/>:<ChevronDown size={14}/>}</span>
+      </button>
+      {open&&<>
       <div className="scale-row">
         <input
           aria-label="Wheel radius"
@@ -54,7 +58,8 @@ export default function MapScaleControls({radiusMeters, unit, onUnitChange, onRa
       <div className="scale-presets">
         {PRESETS.map(p=><button type="button" key={p.label} onClick={()=>onRadiusChange(p.meters)}>{p.label}</button>)}
       </div>
-      <div className="scale-note">1 mi Ø is the default nakshatra compass footprint (0.5 mi / 2,640 ft radius). Radius changes resize the wheel only; astrology calculations remain unchanged.</div>
+      <div className="scale-note">Map display radius only. Street mode uses a fixed 1-mile nakshatra field depth.</div>
+      </>}
     </div>
   );
 }
