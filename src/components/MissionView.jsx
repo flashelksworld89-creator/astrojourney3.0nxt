@@ -123,8 +123,6 @@ export default function MissionView({mission,gps,gpsError,onBack}){
     return()=>{cancelled=true};
   },[followingPlanetId,analysisLocation.lat,analysisLocation.lng,journeyDestination.lat,journeyDestination.lng,trackingMode]);
 
-  useEffect(()=>{if(!chart||!natalChart||!baseReading)return;let cancelled=false;setPrivateReadingBusy(true);requestPrivateInterpretation({chart,natalChart,houseLords,origin:analysisLocation,destination:journeyDestination,bearing:baseReading.bearing,direction:baseReading.direction,distanceKm:baseReading.distanceKm,selectedDate:date,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts,routeContext:routeAnalysis?{...routeAnalysis,streets:routeData?.streets||[],distanceMeters:routeData?.leg?.distanceMeters||0,durationSeconds:routeData?.leg?.durationSeconds||0,startAddress:routeData?.leg?.startAddress||'',endAddress:routeData?.leg?.endAddress||''}:null}).then(r=>!cancelled&&setPrivateReading(r)).catch(()=>!cancelled&&setPrivateReading(null)).finally(()=>!cancelled&&setPrivateReadingBusy(false));return()=>{cancelled=true}},[chart,natalChart,baseReading,houseLords,analysisLocation,journeyDestination,date,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts,routeAnalysis,routeData]);
-
   const reading=useMemo(()=>!baseReading?null:!privateReading?baseReading:{...baseReading,summary:privateReading.summary,privateModelVersion:privateReading.modelVersion},[baseReading,privateReading]);
   const natalSun=natalPlanets.find(p=>p.id==='sun'), natalMoon=natalPlanets.find(p=>p.id==='moon');
   const natalAudit=privateReading?.natalUsage||null;
@@ -145,6 +143,28 @@ export default function MissionView({mission,gps,gpsError,onBack}){
   const resolvedCityRadiusMeters=Number(cityCenter?.radiusMeters)||wheelRadiusMeters;
   const geographicRadiusMeters=/las vegas/i.test(String(cityCenter?.label||''))?Math.max(resolvedCityRadiusMeters,22209.9):resolvedCityRadiusMeters;
   const routeAnalysis=useMemo(()=>routeData?.path?.length&&cityCenter&&chart?analyzeJourneyRoute({path:routeData.path,cityCenter,chart}):null,[routeData,cityCenter,chart]);
+
+  useEffect(()=>{
+    if(!chart||!natalChart||!baseReading)return;
+    let cancelled=false;
+    setPrivateReadingBusy(true);
+    const routeContext=routeAnalysis?{
+      ...routeAnalysis,
+      streets:routeData?.streets||[],
+      distanceMeters:routeData?.leg?.distanceMeters||0,
+      durationSeconds:routeData?.leg?.durationSeconds||0,
+      startAddress:routeData?.leg?.startAddress||'',
+      endAddress:routeData?.leg?.endAddress||''
+    }:null;
+    requestPrivateInterpretation({
+      chart,natalChart,houseLords,origin:analysisLocation,destination:journeyDestination,
+      bearing:baseReading.bearing,direction:baseReading.direction,distanceKm:baseReading.distanceKm,
+      selectedDate:date,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts,routeContext
+    }).then(r=>{if(!cancelled)setPrivateReading(r)})
+      .catch(()=>{if(!cancelled)setPrivateReading(null)})
+      .finally(()=>{if(!cancelled)setPrivateReadingBusy(false)});
+    return()=>{cancelled=true};
+  },[chart,natalChart,baseReading,houseLords,analysisLocation,journeyDestination,date,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts,routeAnalysis,routeData]);
   const natalBirthBearing=useMemo(()=>cityCenter&&Number.isFinite(Number(mission.profile?.birthLat))&&Number.isFinite(Number(mission.profile?.birthLng))?bearingBetween(cityCenter,{lat:Number(mission.profile.birthLat),lng:Number(mission.profile.birthLng)}):null,[cityCenter,mission.profile?.birthLat,mission.profile?.birthLng]);
   const flatModeActive=streetViewActive&&streetCompassMode==='flat';
   const baseWheelSize=Math.max(180,Math.min(mapFullscreen?820:680,560*Math.sqrt(Math.max(30,wheelRadiusMeters)/804.672)));
