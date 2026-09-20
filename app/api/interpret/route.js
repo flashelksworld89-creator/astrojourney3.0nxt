@@ -47,9 +47,15 @@ function planetForecast(p,body,vocab){
   const houseContacts=(body.natalHouseAspects||[]).filter(a=>a.transitId===p.id).sort((a,b)=>a.orb-b.orb);
   const currentContacts=(p.aspects||[]).slice().sort((a,b)=>a.orb-b.orb);
   const rules=ruledHouses(body,p.id);
+  const focus=focusConfiguration(body);
+  const focusedRules=rules.filter(h=>focus.lords.includes(Number(h.house)));
+  const focusedLordIds=new Set((body.houseLords||[]).filter(h=>focus.lords.includes(Number(h.house))).map(h=>h.lordId));
+  const focusedNatalContacts=natalContacts.filter(a=>focusedLordIds.has(a.natalId));
+  const focusedHouseContacts=houseContacts.filter(a=>focus.houses.includes(Number(a.house)));
   const kw=keywordManifestations(bank,`${body.date}|${p.id}`);
   let score=conditionTone(p);
   natalContacts.slice(0,3).forEach(a=>score+=aspectScore(a));
+  const priorityBoost=Math.min(1.5,focusedNatalContacts.length*.45+focusedRules.length*.5+focusedHouseContacts.length*.25);
   if(p.house===zone.house)score+=.4;
   if(houseContacts.some(a=>a.house===zone.house))score+=.3;
   score=clamp(score,-1.5,1.5);
@@ -72,6 +78,8 @@ function planetForecast(p,body,vocab){
   const triggers=[];
   if(natalContacts[0]){const a=natalContacts[0],nh=natalPlanetHouse(body,a.natalId);triggers.push(`${p.name} ${a.type.toLowerCase()} natal ${a.natalName}${nh?` in natal House ${nh}`:''} (${Number(a.orb).toFixed(2)}° orb)`)}
   if(rules.length)triggers.push(`${p.name} rules natal House${rules.length>1?'s':''} ${rules.map(r=>r.house).join(' & ')}`);
+  if(focusedRules.length)triggers.push(`${p.name} is a selected/default focus lord for natal House${focusedRules.length>1?'s':''} ${focusedRules.map(r=>r.house).join(' & ')}`);
+  focusedNatalContacts.slice(0,2).forEach(a=>triggers.push(`${p.name} is directly involved with a selected/default natal house lord through its ${String(a.type).toLowerCase()} to natal ${a.natalName} (${Number(a.orb).toFixed(2)}° orb)`));
   if(p.house===zone.house)triggers.push(`${p.name} is transiting the destination's current House ${zone.house} zone`);
   const zoneHit=houseContacts.find(a=>a.house===zone.house);if(zoneHit)triggers.push(`${p.name} ${zoneHit.type.toLowerCase()} the natal House ${zone.house} cusp (${Number(zoneHit.orb).toFixed(2)}° orb)`);
   if(currentContacts[0])triggers.push(`current ${p.name} ${currentContacts[0].type.toLowerCase()} ${currentContacts[0].with}`);
@@ -80,7 +88,7 @@ function planetForecast(p,body,vocab){
   const headline=`${p.name}: ${tone==='constructive'?'supportive event potential':tone==='challenging'?'higher-friction event potential':'mixed event potential'} around ${joinNatural(themes.slice(0,3))||'the journey'}.`;
   const eventText=`Possible events: ${joinNatural(eventExamples)}${kw.place?`; possibly around ${kw.place}`:''}${kw.object?` or involving ${kw.object}`:''}.`;
   const peopleText=`People you may encounter or deal with: ${joinNatural(peopleExamples)}.`;
-  return {headline,eventText,peopleText,positiveText:`Constructive expression: ${joinNatural(positive)}.`,challengingText:`Challenging expression: ${joinNatural(challenging)}.`,destinationText:destinationLine,triggers,tone,score:Number(score.toFixed(2)),themes,planet:p.id};
+  return {headline,eventText,peopleText,positiveText:`Constructive expression: ${joinNatural(positive)}.`,challengingText:`Challenging expression: ${joinNatural(challenging)}.`,destinationText:destinationLine,triggers,tone,score:Number(score.toFixed(2)),priorityBoost:Number(priorityBoost.toFixed(2)),themes,planet:p.id};
 }
 function houseForecast(h,body,vocab){
   const zone=body.destinationZone||{};
@@ -111,12 +119,63 @@ function houseForecast(h,body,vocab){
     triggers,tone,score:Number(score.toFixed(2)),themes:topics,house:h
   };
 }
+
+function focusConfiguration(body){
+  const pinned=[1,3,7];
+  const houses=uniq([...(Array.isArray(body.focusHouses)?body.focusHouses:[]),...pinned]).map(Number).filter(h=>h>=1&&h<=12);
+  const lords=uniq([...(Array.isArray(body.focusLords)?body.focusLords:[]),...pinned]).map(Number).filter(h=>h>=1&&h<=12);
+  return {houses,lords};
+}
+function focusEvidence(body){
+  const focus=focusConfiguration(body);
+  const lordRows=(body.houseLords||[]).filter(h=>focus.lords.includes(Number(h.house)));
+  const houseRows=focus.houses.map(h=>({house:h,topics:HOUSE_THEMES[h]||[]}));
+  const transitLordHits=[];
+  for(const row of lordRows){
+    const natalLord=(body.natalPlanets||[]).find(p=>p.id===row.lordId);
+    if(!natalLord)continue;
+    const hits=(body.transitNatalAspects||[]).filter(a=>a.natalId===row.lordId).sort((a,b)=>a.orb-b.orb).slice(0,4);
+    for(const hit of hits)transitLordHits.push({...hit,ruledHouse:row.house,lordName:row.lordName||natalLord.name});
+  }
+  const transitHouseHits=(body.natalHouseAspects||[]).filter(a=>focus.houses.includes(Number(a.house))).sort((a,b)=>a.orb-b.orb).slice(0,12);
+  return {focus,lordRows,houseRows,transitLordHits,transitHouseHits};
+}
+function locationAstrologySummary(body){
+  const current=(body.relocationCurrent||[]).slice(0,4);
+  const destination=(body.relocationDestination||[]).slice(0,5);
+  const local=(body.localSpaceContacts||[]).slice(0,5);
+  const parts=[];
+  if(destination.length)parts.push(`At the destination, ${destination.map(x=>`${x.glyph||''}${x.planetName} near ${x.angle} (${Number(x.orb).toFixed(1)}°)`).join(', ')} are the strongest relocation angularities.`);
+  else if(current.length)parts.push(`At the current location, ${current.map(x=>`${x.glyph||''}${x.planetName} near ${x.angle} (${Number(x.orb).toFixed(1)}°)`).join(', ')} are the strongest relocation angularities.`);
+  if(local.length)parts.push(`The route also runs close to local-space direction${local.length>1?'s':''} for ${local.map(x=>`${x.glyph||''}${x.planetName} (${Number(x.routeOrb).toFixed(1)}° from the route)`).join(', ')}.`);
+  return parts.join(' ');
+}
+function focusedJourneySummary(body,planetForecasts){
+  const ev=focusEvidence(body);
+  const special={1:'self, body, identity and personal initiative',3:'communication, errands, skills and short-distance travel',7:'other people, contracts, clients and business relationships'};
+  const lines=[];
+  for(const h of ev.focus.lords){
+    const row=(body.houseLords||[]).find(x=>Number(x.house)===h);
+    if(!row)continue;
+    const hits=ev.transitLordHits.filter(x=>Number(x.ruledHouse)===h).slice(0,2);
+    const base=special[h]||joinNatural(HOUSE_THEMES[h]?.slice(0,3)||[]);
+    lines.push(`Natal House ${h} lord ${row.lordName} (${base})${hits.length?` is being contacted by ${hits.map(x=>`${x.transitName} ${String(x.type).toLowerCase()} (${Number(x.orb).toFixed(1)}°)`).join(' and ')}`:' has no major tight transit aspect in the current aspect set'}.`);
+  }
+  for(const h of ev.focus.houses){
+    const hits=ev.transitHouseHits.filter(x=>Number(x.house)===h).slice(0,2);
+    if(hits.length)lines.push(`Natal House ${h} cusp is activated by ${hits.map(x=>`${x.transitName} ${String(x.type).toLowerCase()} (${Number(x.orb).toFixed(1)}°)`).join(' and ')}.`);
+  }
+  const loc=locationAstrologySummary(body);if(loc)lines.push(loc);
+  return lines.join(' ');
+}
+
 function summaryForecast(body,planetForecasts){
   const zone=body.destinationZone||{};
-  const ranked=Object.values(planetForecasts).sort((a,b)=>Math.abs(b.score)-Math.abs(a.score)).slice(0,3);
+  const ranked=Object.values(planetForecasts).sort((a,b)=>(Math.abs(b.score)+(b.priorityBoost||0))-(Math.abs(a.score)+(a.priorityBoost||0))).slice(0,3);
   const topEvents=uniq(ranked.flatMap(x=>x.eventText.replace(/^Possible events:\s*/,'').replace(/\.$/,'').split(/, |; /))).slice(0,5);
   const topPeople=uniq(ranked.flatMap(x=>x.peopleText.replace(/^People you may encounter or deal with:\s*/,'').replace(/\.$/,'').split(/, | or /))).slice(0,4);
-  return `The route runs ${Number(body.bearing||0).toFixed(0)}° ${body.direction||''} into current House ${zone.house||'—'} (${zone.sign||'—'}). The strongest combined natal/transit signals emphasize possible events such as ${joinNatural(topEvents)}. People or roles emphasized include ${joinNatural(topPeople)}. Open a planet or house for the constructive and challenging versions plus the exact natal/transit triggers behind the forecast. These are astrological possibilities to observe, not guaranteed events.`;
+  const focusText=focusedJourneySummary(body,planetForecasts);
+  return `The route runs ${Number(body.bearing||0).toFixed(0)}° ${body.direction||''} into current House ${zone.house||'—'} (${zone.sign||'—'}). ${focusText?`${focusText} `:''}The strongest combined natal/transit signals emphasize possible events such as ${joinNatural(topEvents)}. People or roles emphasized include ${joinNatural(topPeople)}. Open a planet or house for the constructive and challenging versions plus the exact natal/transit triggers behind the forecast. These are astrological possibilities to observe, not guaranteed events.`;
 }
 
 export const runtime='nodejs';
@@ -139,7 +198,8 @@ export async function POST(request){
       transitNatalHouseAspectCount:Array.isArray(body.natalHouseAspects)?body.natalHouseAspects.length:0,
       verified:Boolean(Number.isFinite(Number(body.natalAsc))&&Array.isArray(body.natalPlanets)&&body.natalPlanets.length>=9&&Array.isArray(body.natalHouseCusps)&&body.natalHouseCusps.length===12)
     };
-    return Response.json({summary:summaryForecast(body,planetPredictions),planetPredictions,housePredictions,destinationZone:body.destinationZone||{},transitNatalAspects:body.transitNatalAspects||[],natalUsage,modelVersion:'event-karaka-route-5-natal-audit'});
+    const focus=focusEvidence(body);
+    return Response.json({summary:summaryForecast(body,planetPredictions),planetPredictions,housePredictions,destinationZone:body.destinationZone||{},transitNatalAspects:body.transitNatalAspects||[],natalUsage,focusAnalysis:{...focus,locationAstrology:locationAstrologySummary(body)},modelVersion:'event-karaka-route-6-focus-astrocartography'});
   }catch(e){
     console.error('Interpretation failed', e);
     return Response.json({error:'Interpretation failed'},{status:500});

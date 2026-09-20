@@ -184,6 +184,7 @@ export async function computeChart(date, lat, lng) {
     planets.push({
       id,name,glyph,
       tropicalLon:pos.longitude,
+      tropicalLat:pos.latitude,
       siderealLon,
       longitudeSpeed:pos.longitudeSpeed,
       retrograde:Number(pos.longitudeSpeed)<0,
@@ -217,6 +218,8 @@ export async function computeChart(date, lat, lng) {
     date,
     jd,
     ayanamsa,
+    tropicalAsc:tropicalHouses.ascendant,
+    tropicalMC:tropicalHouses.mc,
     asc:siderealAsc,
     mc:siderealMC,
     houseCusps:Array.from({length:12},(_,i)=>norm(siderealAsc+i*30)),
@@ -378,4 +381,73 @@ export function buildJourneyReading({origin,destination,transitPlanets,natalPlan
     if(natalLord) summary+=`Natal House ${primary.house} is ruled by ${natalLord.lordName}, placed in natal House ${natalLord.lordHouse}.`;
   }
   return {bearing,direction:getCardinalDirection(bearing),distanceKm:km,summary,activations:[]};
+}
+
+
+export function angularDistance(a,b){
+  return Math.abs(((Number(a)-Number(b)+540)%360)-180);
+}
+
+export function relocationAngularity(natalChart, relocatedChart, orb=5){
+  if(!natalChart?.planets?.length||!relocatedChart)return[];
+  const tropicalAngles=[
+    {key:'ASC',longitude:relocatedChart.tropicalAsc},
+    {key:'DSC',longitude:norm(Number(relocatedChart.tropicalAsc)+180)},
+    {key:'MC',longitude:relocatedChart.tropicalMC},
+    {key:'IC',longitude:norm(Number(relocatedChart.tropicalMC)+180)}
+  ];
+  const siderealAngles=[
+    {key:'ASC',longitude:relocatedChart.asc},
+    {key:'DSC',longitude:norm(Number(relocatedChart.asc)+180)},
+    {key:'MC',longitude:relocatedChart.mc},
+    {key:'IC',longitude:norm(Number(relocatedChart.mc)+180)}
+  ];
+  const hits=[];
+  for(const p of natalChart.planets){
+    for(const a of tropicalAngles){
+      const delta=angularDistance(p.tropicalLon,a.longitude);
+      if(delta<=orb)hits.push({system:'western-relocation',planetId:p.id,planetName:p.name,glyph:p.glyph,angle:a.key,orb:Number(delta.toFixed(2))});
+    }
+    for(const a of siderealAngles){
+      const delta=angularDistance(p.siderealLon,a.longitude);
+      if(delta<=orb)hits.push({system:'sidereal-relocation',planetId:p.id,planetName:p.name,glyph:p.glyph,angle:a.key,orb:Number(delta.toFixed(2))});
+    }
+  }
+  return hits.sort((a,b)=>a.orb-b.orb);
+}
+
+function gmstDegrees(jd){
+  const T=(jd-2451545.0)/36525;
+  return norm(280.46061837+360.98564736629*(jd-2451545.0)+0.000387933*T*T-(T*T*T)/38710000);
+}
+
+export function calculateLocalSpaceDirections(chart,date,lat,lng){
+  if(!chart?.planets?.length||!Number.isFinite(Number(lat))||!Number.isFinite(Number(lng)))return[];
+  const jd=Number(chart.jd)||((new Date(date).getTime()/86400000)+2440587.5);
+  const T=(jd-2451545)/36525;
+  const epsilon=toRad(23.43929111-0.0130041667*T-0.0000001639*T*T+0.0000005036*T*T*T);
+  const phi=toRad(Number(lat));
+  const lst=norm(gmstDegrees(jd)+Number(lng));
+  return chart.planets.map(p=>{
+    const lambda=toRad(Number(p.tropicalLon));
+    const beta=toRad(Number(p.tropicalLat)||0);
+    const dec=Math.asin(Math.sin(beta)*Math.cos(epsilon)+Math.cos(beta)*Math.sin(epsilon)*Math.sin(lambda));
+    const ra=norm(toDeg(Math.atan2(Math.sin(lambda)*Math.cos(epsilon)-Math.tan(beta)*Math.sin(epsilon),Math.cos(lambda))));
+    const H=toRad(norm(lst-ra));
+    const altitude=Math.asin(Math.sin(phi)*Math.sin(dec)+Math.cos(phi)*Math.cos(dec)*Math.cos(H));
+    const az=norm(toDeg(Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(phi)-Math.tan(dec)*Math.cos(phi)))+180);
+    return {planetId:p.id,planetName:p.name,glyph:p.glyph,azimuth:az,altitude:toDeg(altitude)};
+  });
+}
+
+export function localSpaceRouteContacts(localSpace=[],routeBearing,orb=12){
+  if(!Number.isFinite(Number(routeBearing)))return[];
+  const out=[];
+  for(const p of localSpace){
+    const direct=angularDistance(p.azimuth,routeBearing);
+    const opposite=angularDistance(norm(p.azimuth+180),routeBearing);
+    const delta=Math.min(direct,opposite);
+    if(delta<=orb)out.push({...p,routeOrb:Number(delta.toFixed(2)),arm:direct<=opposite?'forward':'opposite'});
+  }
+  return out.sort((a,b)=>a.routeOrb-b.routeOrb);
 }
