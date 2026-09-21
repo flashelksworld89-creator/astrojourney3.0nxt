@@ -100,9 +100,18 @@ Deployment note: Node is pinned to 24.x for current Vercel compatibility.
 - Prose avoids redundant travel/movement wording and focuses on what may actually happen, who may be involved, and what may require a response.
 - Planet/house clicks change focus context but do not create separate prediction generators or panels.
 
-## 3.7.0 Event-Driven Vedic Prediction Rewrite
+## 3.7.1 Event-Driven Vedic Prediction Rewrite
 - Replaces chart-description prose with an event-candidate engine.
 - Vedic evidence is calculated first; technical details are shown only under Astrological Basis.
 - Uses house activation, priority lords (1/3/7/9), Moon testimony, destination contacts, applying/exact/separating phase, nakshatra modifiers, and dispositor state.
 - Hidden planet terminology is applied only after an event category is established, supplying concrete people, events, places, and objects.
 - Visible prose is required to describe possible situations rather than restating placements/aspects.
+
+
+## 3.7.1 control-deck and planet forecast redesign
+- Merges current time, wheel calendar/time controls, and transit positions into one upper-left Transit Chart panel.
+- Adds a matching Natal Chart panel immediately to the right, with natal positions and Prediction Focus merged inside it.
+- Removes the Relocation Astrology widget from the mission interface.
+- Route directions are calculated independently of planet selection so every planet can be evaluated against the same route.
+- Prediction Center now generates a separate route forecast for each transit planet rather than one blended all-planets forecast.
+- Route field transitions are added to the planetary evidence stream.

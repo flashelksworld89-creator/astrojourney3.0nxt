@@ -1,14 +1,15 @@
 const DEFAULT_LORDS=[1,3,7,9];
 const LABELS={1:'Self',2:'Resources',3:'Communication / local travel',4:'Home',5:'Creativity',6:'Work / service',7:'Others / contracts',8:'Shared matters',9:'Long travel / belief',10:'Career',11:'Networks / gains',12:'Foreign / retreat'};
 
-export default function PredictionFocusSelector({houseLords=[],focusHouses=[],focusLords=[],onChange}){
+export default function PredictionFocusSelector({houseLords=[],focusHouses=[],focusLords=[],onChange,embedded=false}){
   const toggle=(type,house)=>{
     const current=type==='house'?focusHouses:focusLords;
     if(type==='lord'&&DEFAULT_LORDS.includes(house))return;
     const next=current.includes(house)?current.filter(x=>x!==house):[...current,house].sort((a,b)=>a-b);
     onChange?.(type,next);
   };
-  return <section className="card prediction-focus-selector">
+  const Tag=embedded?'div':'section';
+  return <Tag className={`${embedded?'prediction-focus-embedded':'card'} prediction-focus-selector`}>
     <div className="section-title">Prediction focus <span>DEFAULT 1 · 3 · 7 · 9 LORDS</span></div>
     <p className="small-note">The 1st lord (self), 3rd lord (communication and short-distance travel), 7th lord (other people, contracts and business relationships), and 9th lord (long journeys, guidance and unfamiliar territory) stay emphasized. Add any other houses or lords you want included.</p>
     <div className="focus-selector-head"><span>House</span><span>House themes</span><span>House</span><span>Lord</span></div>
@@ -21,5 +22,5 @@ export default function PredictionFocusSelector({houseLords=[],focusHouses=[],fo
         <label><input type="checkbox" checked={focusHouses.includes(h)} onChange={()=>toggle('house',h)}/> House</label>
         <label title={defaultLord?'Default lord focus stays active':''}><input type="checkbox" checked={focusLords.includes(h)||defaultLord} disabled={defaultLord} onChange={()=>toggle('lord',h)}/> {lord?.lordGlyph||''} {lord?.lordName||'Lord'}{defaultLord?' · default':''}</label>
       </div>})}</div>
-  </section>;
+  </Tag>;
 }

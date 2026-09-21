@@ -9,7 +9,7 @@ export async function requestPrivateInterpretation({chart,natalChart,houseLords,
   const zone=destinationZoneFromBearing(chart,bearing);
   const formulaEvidence=buildPredictionFormulaEvidence({chart,natalChart,houseLords,currentZone,destinationZone:zone,routeContext});
   const planets=chart.planets.map(p=>({
-    id:p.id,name:p.name,sign:p.sign,degree:Number(p.degree),siderealLon:p.siderealLon,house:p.house,
+    id:p.id,name:p.name,glyph:p.glyph,sign:p.sign,degree:Number(p.degree),siderealLon:p.siderealLon,house:p.house,
     nakshatra:p.nakshatra?.name,pada:p.nakshatra?.pada,retrograde:p.retrograde,longitudeSpeed:Number(p.longitudeSpeed)||0,
     condition:p.condition?.label,conditionStrength:p.condition?.strength,aspects:aspectsForPlanet(p.id,transitAspects)
   }));

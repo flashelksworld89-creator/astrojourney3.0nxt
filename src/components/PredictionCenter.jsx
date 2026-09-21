@@ -5,31 +5,36 @@ function Chips({title,items=[]}){
   return <div className="prediction-center-manifest-group"><b>{title}</b><div>{items.map((x,i)=><span key={`${x}-${i}`}>{x}</span>)}</div></div>;
 }
 
-export default function PredictionCenter({data,busy,selectedPlanet,selectedHouse,destinationZone}){
-  const focus=selectedPlanet?`${selectedPlanet.glyph||''} ${selectedPlanet.name}`:selectedHouse?`House ${selectedHouse}`:'Overall journey';
-  return <section className="card prediction-center" aria-label="Prediction center">
+function PlanetPredictionCard({item,active,onSelect}){
+  return <article className={`planet-route-prediction ${active?'active':''}`}>
+    <button className="planet-route-head" type="button" onClick={()=>onSelect?.(item.planetId)}>
+      <span className="planet-route-glyph">{item.glyph||'•'}</span>
+      <span><b>{item.planetName}</b><small>{item.sign} {Number(item.degree).toFixed(2)}° · H{item.house}{item.nakshatra?` · ${item.nakshatra}`:''}{item.pada?` P${item.pada}`:''}</small></span>
+      {item.retrograde&&<em>R</em>}
+    </button>
+    <p>{item.prose}</p>
+    <div className="planet-route-manifest-row">
+      <Chips title="Events" items={item.manifestations?.events}/>
+      <Chips title="People" items={item.manifestations?.people}/>
+      <Chips title="Objects" items={item.manifestations?.objects}/>
+      <Chips title="Places" items={item.manifestations?.places}/>
+    </div>
+    {!!item.basis?.length&&<details className="prediction-center-basis"><summary>Astrological basis</summary><ul>{item.basis.map((x,i)=><li key={i}>{x}</li>)}</ul></details>}
+  </article>;
+}
+
+export default function PredictionCenter({data,busy,selectedPlanet,onPlanetSelect}){
+  const forecasts=data?.planetPredictions||[];
+  return <section className="card prediction-center" aria-label="Planet-by-planet route predictions">
     <div className="prediction-center-header">
-      <div><small>VEDIC EVENT SYNTHESIS</small><div className="section-title"><Sparkles size={14}/> Prediction Center <span>{focus}</span></div></div>
+      <div><small>VEDIC ROUTE FORECASTS</small><div className="section-title"><Sparkles size={14}/> Planet-by-planet predictions <span>{forecasts.length||0} PLANETS</span></div></div>
       {busy&&<div className="prediction-center-busy"><Loader2 className="spin" size={14}/> Updating</div>}
     </div>
-    {!data?<p className="prediction-center-empty">The prediction will appear here after the natal chart, transit chart, and destination field are ready.</p>:<>
-      <p className="prediction-center-prose">{data.overallProse}</p>
-      <div className="prediction-center-sections">
-        <div><b>Mindset & Actions</b><p>{data.sections?.mindsetActions||'No strong Moon/self testimony is active in the current evidence set.'}</p></div>
-        <div><b>Developments En Route</b><p>{data.sections?.developmentsEnRoute||'No unusually concentrated route testimony is active.'}</p></div>
-        <div><b>People & Encounters</b><p>{data.sections?.peopleEncounters||'No unusually concentrated 7th-house or destination-person testimony is active.'}</p></div>
-        <div><b>Destination Conditions</b><p>{data.sections?.destinationConditions||`Destination field${destinationZone?.house?` is House ${destinationZone.house}`:''}.`}</p></div>
+    {!data?<p className="prediction-center-empty">Planet forecasts will appear after the natal chart, transit chart, and destination are ready.</p>:<>
+      <p className="prediction-center-intro">Each planet is interpreted separately against the natal chart, route lords, Moon testimony, route fields, destination field, nakshatra modifiers, dispositors, and your private terminology.</p>
+      <div className="planet-route-prediction-grid">
+        {forecasts.map(item=><PlanetPredictionCard key={item.planetId} item={item} active={selectedPlanet?.id===item.planetId} onSelect={onPlanetSelect}/>)}
       </div>
-      <div className="prediction-center-manifestations">
-        <small>Concrete manifestations supported by the testimony</small>
-        <div className="prediction-center-manifest-grid">
-          <Chips title="Events" items={data.manifestations?.events}/>
-          <Chips title="People" items={data.manifestations?.people}/>
-          <Chips title="Places" items={data.manifestations?.places}/>
-          <Chips title="Objects" items={data.manifestations?.objects}/>
-        </div>
-      </div>
-      {!!data.basis?.length&&<details className="prediction-center-basis"><summary>Astrological basis</summary><ul>{data.basis.map((x,i)=><li key={i}>{x}</li>)}</ul><p className="small-note">{data.terminologyRule}</p></details>}
     </>}
   </section>;
 }

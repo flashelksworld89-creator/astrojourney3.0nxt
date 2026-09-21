@@ -110,6 +110,13 @@ function collectCandidates(body,vocab){
   for(const x of (ev.destination?.aspects||[]).slice(0,7)){
     const h=Number(ev.destination?.field?.house)||7;const c=makeCandidate({body,vocab,planet:x.planet,house:h,aspect:x.aspect,kind:'destination',context:ev.destination?.field,priorityExtra:.2,label:'Destination field contact'});if(c)out.push(c);
   }
+  for(const transition of (ev.route?.fieldAspects||[])){
+    const field=transition?.field||{};
+    const h=Number(field.house)||3;
+    for(const x of (transition?.aspects||[]).slice(0,5)){
+      const c=makeCandidate({body,vocab,planet:x.planet,house:h,aspect:x.aspect,kind:'route-field',context:field,priorityExtra:.16,label:`Route field ${Number(transition.index)+1} contact`});if(c)out.push(c);
+    }
+  }
   const m=ev.moon;
   if(m?.transitMoon&&m?.moonToNatalMoon){const h=Number(m.transitMoon.house)||1;const c=makeCandidate({body,vocab,planet:m.transitMoon,house:h,aspect:m.moonToNatalMoon,kind:'moon',context:{nakshatra:m.transitMoon.nakshatra},priorityExtra:.25,label:'Transit Moon to natal Moon'});if(c)out.push(c)}
   for(const x of m?.moonToPriorityLords||[]){for(const h of x.houses||[]){const c=makeCandidate({body,vocab,planet:m.transitMoon,house:Number(h),aspect:x.aspect,kind:'moon',context:{nakshatra:m.transitMoon.nakshatra},priorityExtra:.25,label:`Moon contact to House ${h} lord`});if(c)out.push(c)}}
@@ -185,10 +192,51 @@ function basisLines(body,cands){
   });
 }
 
+
+function fallbackPlanetCandidate(body,vocab,planet){
+  if(!planet)return null;
+  const destinationHouse=Number(body.formulaEvidence?.destination?.field?.house);
+  const house=Number.isFinite(destinationHouse)&&destinationHouse>=1&&destinationHouse<=12?destinationHouse:Number(planet.house)||1;
+  return makeCandidate({
+    body,vocab,planet,house,
+    aspect:{type:'Placement',orb:0,phase:'current'},
+    kind:'route-placement',
+    context:body.formulaEvidence?.destination?.field||{nakshatra:planet.nakshatra,sign:planet.sign},
+    priorityExtra:.08,
+    label:`${planet.name} route placement`
+  });
+}
+
+function planetRoutePredictions(body,vocab,candidates){
+  return (body.planets||[]).map(planet=>{
+    let own=candidates.filter(c=>c.planetId===planet.id).sort((a,b)=>b.score-a.score);
+    if(!own.length){const fallback=fallbackPlanetCandidate(body,vocab,planet);if(fallback)own=[fallback]}
+    const top=own[0];
+    const support=own[1];
+    const destinationHit=own.find(c=>c.kind==='destination');
+    let prose=top?predictionSentence(top):`${planet.name} does not produce a concentrated route event signature in the current evidence set.`;
+    if(support&&support.house!==top?.house)prose+=` ${predictionSentence(support)}`;
+    if(destinationHit&&destinationHit!==top&&destinationHit!==support)prose+=` Near the destination, ${predictionSentence(destinationHit).replace(/^./,m=>m.toLowerCase())}`;
+    return {
+      planetId:planet.id,planetName:planet.name,glyph:planet.glyph||'',sign:planet.sign,degree:planet.degree,house:planet.house,nakshatra:planet.nakshatra,pada:planet.pada,retrograde:planet.retrograde,
+      score:Number((top?.score||0).toFixed(2)),
+      prose,
+      manifestations:{
+        events:uniq(own.slice(0,4).flatMap(c=>[c.terminologyEvent,c.action,c.modifier])).slice(0,5),
+        people:uniq(own.slice(0,4).map(c=>c.actor)).slice(0,4),
+        places:uniq(own.slice(0,4).map(c=>c.place)).slice(0,3),
+        objects:uniq(own.slice(0,4).map(c=>c.object)).slice(0,4)
+      },
+      basis:basisLines(body,own).slice(0,5)
+    };
+  });
+}
+
 export function buildEventDrivenPrediction(body,vocab){
   const candidates=collectCandidates(body,vocab);const groups=clusterCandidates(candidates);
   return {
     overallProse:overallProse(groups),
+    planetPredictions:planetRoutePredictions(body,vocab,candidates),
     sections:{
       mindsetActions:moonMindsetProse(body,groups),
       developmentsEnRoute:groups.journey?.length?groups.journey.slice(0,2).map(c=>predictionSentence(c)).join(' '):'No unusually concentrated journey-specific event signature is active.',

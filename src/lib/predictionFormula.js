@@ -131,7 +131,7 @@ export function buildPredictionFormulaEvidence({chart,natalChart,houseLords,curr
     routeLordChains:lordChains,
     currentLocation:{field:currentField,aspects:fieldAspects(chart,currentField)},
     destination:{field:destinationField,aspects:fieldAspects(chart,destinationField)},
-    route:{start:currentField,end:destinationField,fieldTransitions:routeFields,houseSequence:routeContext?.houseSequence||[],nakshatraSequence:routeContext?.nakshatraSequence||[],gandanta:routeContext?.gandanta||[]},
+    route:{start:currentField,end:destinationField,fieldTransitions:routeFields,fieldAspects:routeFields.map((field,i)=>({field,index:i,aspects:fieldAspects(chart,field)})),houseSequence:routeContext?.houseSequence||[],nakshatraSequence:routeContext?.nakshatraSequence||[],gandanta:routeContext?.gandanta||[]},
     moon:moonEvidence(chart,natalChart,lordChains,currentField,destinationField)
   };
 }

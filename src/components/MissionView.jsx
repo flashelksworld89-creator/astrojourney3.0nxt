@@ -1,21 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Compass, Map, Maximize2, Minimize2, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Compass, Map, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import ZodiacWheel from './ZodiacWheel';
 import GoogleMissionMap from './GoogleMissionMap';
 import StreetGameOverlay from './StreetGameOverlay';
 import NakshatraExplorer from './NakshatraExplorer';
 import PlanetStrip from './PlanetStrip';
 import OutcomeFeedback from './OutcomeFeedback';
-import TimeNavigator from './TimeNavigator';
-import TransitPositionsPanel from './TransitPositionsPanel';
-import CurrentDateTimeWidget from './CurrentDateTimeWidget';
+import TransitTimeControlPanel from './TransitTimeControlPanel';
+import NatalFocusPanel from './NatalFocusPanel';
 import JourneyDirectionsPanel from './JourneyDirectionsPanel';
-import PredictionFocusSelector from './PredictionFocusSelector';
 import PredictionCenter from './PredictionCenter';
-import LocationAstrologyPanel from './LocationAstrologyPanel';
 import MapScaleControls from './MapScaleControls';
 import LiveTrackingControls from './LiveTrackingControls';
-import {computeChart,computeNatalChart,calculateHouseLords,buildJourneyReading,bearingBetween,destinationZoneFromBearing,distanceKmBetween,geographicHouseFromBearing,formatDistance,HOUSE_MEANINGS,getSignData,relocationAngularity,calculateLocalSpaceDirections,localSpaceRouteContacts} from '../lib/astro';
+import {computeChart,computeNatalChart,calculateHouseLords,buildJourneyReading,bearingBetween,destinationZoneFromBearing,distanceKmBetween,geographicHouseFromBearing,formatDistance,calculateLocalSpaceDirections,localSpaceRouteContacts} from '../lib/astro';
 import { requestPrivateInterpretation } from '../lib/privateInterpretation';
 import { analyzeJourneyRoute } from '../lib/journeyRoute';
 import { loadGoogleMaps } from '../lib/googleMaps';
@@ -32,7 +29,7 @@ const TRACKING = {
 
 export default function MissionView({mission,gps,gpsError,onBack}){
   const initialMode=mission.trackingMode||((mission.originSource==='gps')?(mission.travelMode||'walk'):'static');
-  const [view,setView]=useState('map'),[mapFullscreen,setMapFullscreen]=useState(false),[fullscreenSettling,setFullscreenSettling]=useState(false),[fullscreenPredictionOpen,setFullscreenPredictionOpen]=useState(false),[date,setDate]=useState(new Date(mission.date)),[live,setLive]=useState(()=>Math.abs(new Date(mission.date).getTime()-Date.now())<5*60*1000),[trackingMode,setTrackingMode]=useState(initialMode),[liveLocation,setLiveLocation]=useState(initialMode==='static'?mission.location:(gps||mission.location)),[analysisLocation,setAnalysisLocation]=useState(mission.location),[chart,setChart]=useState(null),[natalChart,setNatalChart]=useState(null),[selected,setSelected]=useState(null),[selectedHouse,setSelectedHouse]=useState(null),[loadingChart,setLoadingChart]=useState(true),[privateReading,setPrivateReading]=useState(null),[privateReadingBusy,setPrivateReadingBusy]=useState(false),[wheelRadiusMeters,setWheelRadiusMeters]=useState(804.672),[distanceUnit,setDistanceUnit]=useState(initialMode==='drive'?'mi':'ft'),[movedMeters,setMovedMeters]=useState(0),[lastAnalysisAt,setLastAnalysisAt]=useState(Date.now()),[chartError,setChartError]=useState(''),[natalStatus,setNatalStatus]=useState('calculating'),[natalError,setNatalError]=useState(''),[streetViewActive,setStreetViewActive]=useState(false),[streetPov,setStreetPov]=useState({heading:0,pitch:0,zoom:0}),[streetRoadBearing,setStreetRoadBearing]=useState(null),[streetCompassMode,setStreetCompassMode]=useState('upright'),[followingPlanetId,setFollowingPlanetId]=useState(null),[cityCenter,setCityCenter]=useState(null),[cityWheelDiameterPx,setCityWheelDiameterPx]=useState(null),[journeyDestination,setJourneyDestination]=useState(mission.destination),[mapSelectedPlace,setMapSelectedPlace]=useState(null),[mapSearchText,setMapSearchText]=useState(''),[mapSearchBusy,setMapSearchBusy]=useState(false),[mapFocusLocation,setMapFocusLocation]=useState(null),[mapStreetLocation,setMapStreetLocation]=useState(null),[highlightRoad,setHighlightRoad]=useState(null),[focusHouses,setFocusHouses]=useState([1,3,7,9]),[focusLords,setFocusLords]=useState([1,3,7,9]),[relocatedCurrent,setRelocatedCurrent]=useState(null),[relocatedDestination,setRelocatedDestination]=useState(null),[routeData,setRouteData]=useState(null),[centerRouteRequest,setCenterRouteRequest]=useState(0);
+  const [view,setView]=useState('map'),[mapFullscreen,setMapFullscreen]=useState(false),[fullscreenSettling,setFullscreenSettling]=useState(false),[fullscreenPredictionOpen,setFullscreenPredictionOpen]=useState(false),[date,setDate]=useState(new Date(mission.date)),[live,setLive]=useState(()=>Math.abs(new Date(mission.date).getTime()-Date.now())<5*60*1000),[trackingMode,setTrackingMode]=useState(initialMode),[liveLocation,setLiveLocation]=useState(initialMode==='static'?mission.location:(gps||mission.location)),[analysisLocation,setAnalysisLocation]=useState(mission.location),[chart,setChart]=useState(null),[natalChart,setNatalChart]=useState(null),[selected,setSelected]=useState(null),[selectedHouse,setSelectedHouse]=useState(null),[loadingChart,setLoadingChart]=useState(true),[privateReading,setPrivateReading]=useState(null),[privateReadingBusy,setPrivateReadingBusy]=useState(false),[wheelRadiusMeters,setWheelRadiusMeters]=useState(804.672),[distanceUnit,setDistanceUnit]=useState(initialMode==='drive'?'mi':'ft'),[movedMeters,setMovedMeters]=useState(0),[lastAnalysisAt,setLastAnalysisAt]=useState(Date.now()),[chartError,setChartError]=useState(''),[natalStatus,setNatalStatus]=useState('calculating'),[natalError,setNatalError]=useState(''),[streetViewActive,setStreetViewActive]=useState(false),[streetPov,setStreetPov]=useState({heading:0,pitch:0,zoom:0}),[streetRoadBearing,setStreetRoadBearing]=useState(null),[streetCompassMode,setStreetCompassMode]=useState('upright'),[followingPlanetId,setFollowingPlanetId]=useState(null),[cityCenter,setCityCenter]=useState(null),[cityWheelDiameterPx,setCityWheelDiameterPx]=useState(null),[journeyDestination,setJourneyDestination]=useState(mission.destination),[mapSelectedPlace,setMapSelectedPlace]=useState(null),[mapSearchText,setMapSearchText]=useState(''),[mapSearchBusy,setMapSearchBusy]=useState(false),[mapFocusLocation,setMapFocusLocation]=useState(null),[mapStreetLocation,setMapStreetLocation]=useState(null),[highlightRoad,setHighlightRoad]=useState(null),[focusHouses,setFocusHouses]=useState([1,3,7,9]),[focusLords,setFocusLords]=useState([1,3,7,9]),[routeData,setRouteData]=useState(null),[centerRouteRequest,setCenterRouteRequest]=useState(0);
   const lastAnalysisRef=useRef({location:mission.location,at:Date.now()});
   const interpretationTimerRef=useRef(null);
   const lastInterpretationKeyRef=useRef('');
@@ -77,27 +74,16 @@ export default function MissionView({mission,gps,gpsError,onBack}){
   useEffect(()=>{let cancelled=false;setLoadingChart(true);setChartError('');computeChart(date,analysisLocation.lat,analysisLocation.lng).then(next=>{if(!cancelled){setChart(next);setSelected(prev=>prev?next.planets.find(p=>p.id===prev.id)||null:null)}}).catch(e=>{if(!cancelled){setChartError(e?.message||'Transit chart calculation failed.');setChart(null)}}).finally(()=>!cancelled&&setLoadingChart(false));return()=>{cancelled=true}},[date,analysisLocation.lat,analysisLocation.lng]);
   useEffect(()=>{let cancelled=false;const p=mission.profile;setNatalStatus('calculating');setNatalError('');setNatalChart(null);computeNatalChart(p.birthDate,p.birthTime,p.birthLat,p.birthLng,p.birthUtcOffset).then(n=>{if(!cancelled){if(!n?.planets?.length||!Number.isFinite(Number(n.asc)))throw new Error('Natal chart returned incomplete data.');setNatalChart(n);setNatalStatus('verified')}}).catch(e=>{if(!cancelled){setNatalStatus('error');setNatalError(e?.message||'Natal chart calculation failed.')}});return()=>{cancelled=true}},[mission.profile]);
 
-  useEffect(()=>{
-    if(!natalChart)return;let cancelled=false;const p=mission.profile;
-    Promise.all([
-      computeNatalChart(p.birthDate,p.birthTime,analysisLocation.lat,analysisLocation.lng,p.birthUtcOffset),
-      computeNatalChart(p.birthDate,p.birthTime,journeyDestination.lat,journeyDestination.lng,p.birthUtcOffset)
-    ]).then(([currentReloc,destReloc])=>{if(!cancelled){setRelocatedCurrent(currentReloc);setRelocatedDestination(destReloc)}}).catch(()=>{if(!cancelled){setRelocatedCurrent(null);setRelocatedDestination(null)}});
-    return()=>{cancelled=true};
-  },[natalChart,mission.profile,analysisLocation.lat,analysisLocation.lng,journeyDestination.lat,journeyDestination.lng]);
-
   const planets=chart?.planets||[],natalPlanets=natalChart?.planets||[];
   const houseLords=useMemo(()=>calculateHouseLords(natalPlanets,natalChart?.asc),[natalPlanets,natalChart?.asc]);
   const baseReading=useMemo(()=>buildJourneyReading({origin:analysisLocation,destination:journeyDestination,transitPlanets:planets,natalPlanets,houseLords,selectedDate:date}),[analysisLocation,journeyDestination,planets,natalPlanets,houseLords,date]);
   const bearing=useMemo(()=>bearingBetween(analysisLocation,journeyDestination),[analysisLocation,journeyDestination]);
   const destinationZone=useMemo(()=>chart?destinationZoneFromBearing(chart,bearing):null,[chart,bearing]);
-  const relocationCurrent=useMemo(()=>natalChart&&relocatedCurrent?relocationAngularity(natalChart,relocatedCurrent,5):[],[natalChart,relocatedCurrent]);
-  const relocationDestination=useMemo(()=>natalChart&&relocatedDestination?relocationAngularity(natalChart,relocatedDestination,5):[],[natalChart,relocatedDestination]);
   const localSpaceDirections=useMemo(()=>natalChart?calculateLocalSpaceDirections(natalChart,natalChart.date,analysisLocation.lat,analysisLocation.lng):[],[natalChart,analysisLocation.lat,analysisLocation.lng]);
   const localSpaceContacts=useMemo(()=>localSpaceRouteContacts(localSpaceDirections,bearing,12),[localSpaceDirections,bearing]);
 
   useEffect(()=>{
-    if(!followingPlanetId||!analysisLocation||!journeyDestination||!Number.isFinite(Number(journeyDestination.lat))||!Number.isFinite(Number(journeyDestination.lng))){setRouteData(null);return;}
+    if(!analysisLocation||!journeyDestination||!Number.isFinite(Number(journeyDestination.lat))||!Number.isFinite(Number(journeyDestination.lng))){setRouteData(null);return;}
     let cancelled=false;setRouteData(null);
     loadGoogleMaps().then(maps=>{
       const service=new maps.DirectionsService();
@@ -117,13 +103,12 @@ export default function MissionView({mission,gps,gpsError,onBack}){
       });
     }).catch(e=>!cancelled&&setRouteData({status:'FALLBACK',error:e?.message||'Road directions unavailable.'}));
     return()=>{cancelled=true};
-  },[followingPlanetId,analysisLocation?.lat,analysisLocation?.lng,journeyDestination?.lat,journeyDestination?.lng,trackingMode]);
+  },[analysisLocation?.lat,analysisLocation?.lng,journeyDestination?.lat,journeyDestination?.lng,trackingMode]);
 
   const reading=useMemo(()=>!baseReading?null:!privateReading?baseReading:{...baseReading,summary:privateReading.summary,privateModelVersion:privateReading.modelVersion},[baseReading,privateReading]);
   const natalSun=natalPlanets.find(p=>p.id==='sun'), natalMoon=natalPlanets.find(p=>p.id==='moon');
   const natalAudit=privateReading?.natalUsage||null;
   const followedPlanet=planets.find(p=>p.id===followingPlanetId)||null;
-  const focusTitle=selected?`${selected.glyph} ${selected.name}`:selectedHouse?`House ${selectedHouse} · ${HOUSE_MEANINGS[selectedHouse]?.name||''}`:'Overall journey';
   const choosePlanet=p=>{setSelected(p);setSelectedHouse(null);setFollowingPlanetId(p?.id||null)};const chooseHouse=h=>{setSelectedHouse(h);setSelected(null)};
   const followedBearing=followedPlanet&&chart?((followedPlanet.siderealLon+90-chart.asc)%360+360)%360:null;
   const followedDirection=Number.isFinite(followedBearing)?cardinalFromBearing(followedBearing):null;
@@ -177,14 +162,14 @@ export default function MissionView({mission,gps,gpsError,onBack}){
       requestPrivateInterpretation({
         chart,natalChart,houseLords,origin:analysisLocation,destination:journeyDestination,
         bearing:baseReading.bearing,direction:baseReading.direction,distanceKm:baseReading.distanceKm,
-        selectedDate:date,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts,routeContext,currentZone:geographicNakshatraZone
+        selectedDate:date,focusHouses,focusLords,localSpaceContacts,routeContext,currentZone:geographicNakshatraZone
       }).then(r=>{if(!cancelled)setPrivateReading(r)})
         .catch(()=>{if(!cancelled)setPrivateReading(null)})
         .finally(()=>{if(!cancelled)setPrivateReadingBusy(false)});
     },220);
 
     return()=>{cancelled=true;clearTimeout(interpretationTimerRef.current)};
-  },[chart,natalChart,baseReading,houseLords,analysisLocation,journeyDestination,date,focusHouses,focusLords,relocationCurrent,relocationDestination,localSpaceContacts,routeAnalysis,routeData,geographicNakshatraZone]);
+  },[chart,natalChart,baseReading,houseLords,analysisLocation,journeyDestination,date,focusHouses,focusLords,localSpaceContacts,routeAnalysis,routeData,geographicNakshatraZone]);
   const natalBirthBearing=useMemo(()=>cityCenter&&Number.isFinite(Number(mission.profile?.birthLat))&&Number.isFinite(Number(mission.profile?.birthLng))?bearingBetween(cityCenter,{lat:Number(mission.profile.birthLat),lng:Number(mission.profile.birthLng)}):null,[cityCenter,mission.profile?.birthLat,mission.profile?.birthLng]);
   const flatModeActive=streetViewActive&&streetCompassMode==='flat';
   const baseWheelSize=Math.max(180,Math.min(mapFullscreen?820:680,560*Math.sqrt(Math.max(30,wheelRadiusMeters)/804.672)));
@@ -241,8 +226,16 @@ export default function MissionView({mission,gps,gpsError,onBack}){
   };
 
   return <div className={mapFullscreen?'mission-page map-is-fullscreen':'mission-page'}>
-    {!mapFullscreen&&<><header className="mission-header"><button onClick={onBack} className="back-button"><ArrowLeft size={16}/> Setup</button><div><h1>AstroWalk Journey <small className="build-version">v3.7.0 Event-Driven Vedic Predictions</small></h1><p>{journeyDestination?.label||'No destination selected'}</p></div></header><div className="top-analysis-grid"><CurrentDateTimeWidget/><TimeNavigator date={date} live={live} onLive={()=>{setLive(true);setDate(new Date())}} onChange={d=>{if(!Number.isNaN(d.getTime())){setLive(false);setDate(d)}}}/><TransitPositionsPanel date={date} live={live} chart={chart}/></div><section className="card natal-verification"><div className="section-title">Natal chart verification <span>{natalStatus==='verified'?'ACTIVE':natalStatus==='error'?'ERROR':'CALCULATING'}</span></div>{natalStatus==='calculating'&&<div className="natal-status-line"><Loader2 className="spin" size={15}/> Calculating natal Ascendant, houses and planets…</div>}{natalStatus==='error'&&<div className="natal-error"><b>Natal chart was not generated.</b><span>{natalError}</span><span>Return to Setup and verify birth date, exact birth time, birthplace and UTC offset.</span></div>}{natalStatus==='verified'&&natalChart&&<><div className="natal-verified-head"><span className="natal-asc-dot"/><b>Natal chart verified and available to the prediction engine</b></div><div className="natal-proof-grid"><div><small>Natal ASC</small><b>{getSignData(natalChart.asc).label}</b></div><div><small>Natal Sun</small><b>{natalSun?`${natalSun.sign} ${natalSun.degree}°`:'—'}</b></div><div><small>Natal Moon</small><b>{natalMoon?`${natalMoon.sign} ${natalMoon.degree}°`:'—'}</b></div><div><small>Birth houses</small><b>{natalChart.houseCusps?.length||0} loaded</b></div></div>{natalAudit&&<div className="natal-used-audit"><b>Used in this prediction</b><span>{natalAudit.transitNatalAspectCount} transit→natal planet contacts</span><span>{natalAudit.transitNatalHouseAspectCount} transit→natal house contacts</span><span>{natalAudit.houseLordCount} natal house rulers</span></div>}</>}</section>{natalStatus==='verified'&&<PredictionFocusSelector houseLords={houseLords} focusHouses={focusHouses} focusLords={focusLords} onChange={(type,next)=>type==='house'?setFocusHouses(next):setFocusLords(next)}/>} {natalStatus==='verified'&&<LocationAstrologyPanel currentHits={relocationCurrent} destinationHits={relocationDestination} localSpaceContacts={localSpaceContacts}/>}<div className="mission-tabs"><button className={view==='compass'?'active':''} onClick={()=>setView('compass')}><Compass size={16}/> Compass</button><button className={view==='map'?'active':''} onClick={()=>setView('map')}><Map size={16}/> Map</button></div><PlanetStrip planets={planets} selected={selected} onSelect={choosePlanet}/></>}
-    <PredictionCenter data={privateReading?.predictionCenter} busy={privateReadingBusy} selectedPlanet={selected} selectedHouse={selectedHouse} destinationZone={destinationZone}/>
+    {!mapFullscreen&&<>
+      <header className="mission-header"><button onClick={onBack} className="back-button"><ArrowLeft size={16}/> Setup</button><div><h1>AstroWalk Journey <small className="build-version">v3.7.1 Planet Route Forecasts</small></h1><p>{journeyDestination?.label||'No destination selected'}</p></div></header>
+      <div className="astro-control-deck">
+        <TransitTimeControlPanel date={date} live={live} chart={chart} onLive={()=>{setLive(true);setDate(new Date())}} onChange={d=>{if(!Number.isNaN(d.getTime())){setLive(false);setDate(d)}}}/>
+        <NatalFocusPanel natalStatus={natalStatus} natalError={natalError} natalChart={natalChart} houseLords={houseLords} focusHouses={focusHouses} focusLords={focusLords} natalAudit={natalAudit} onFocusChange={(type,next)=>type==='house'?setFocusHouses(next):setFocusLords(next)}/>
+      </div>
+      <div className="mission-tabs"><button className={view==='compass'?'active':''} onClick={()=>setView('compass')}><Compass size={16}/> Compass</button><button className={view==='map'?'active':''} onClick={()=>setView('map')}><Map size={16}/> Map</button></div>
+      <PlanetStrip planets={planets} selected={selected} onSelect={choosePlanet}/>
+    </>}
+    <PredictionCenter data={privateReading?.predictionCenter} busy={privateReadingBusy} selectedPlanet={selected} onPlanetSelect={id=>choosePlanet(planets.find(p=>p.id===id)||null)}/>
     {loadingChart&&!chart?<section className="card loading-chart"><Loader2 className="spin" size={20}/> Calculating sidereal transit chart…</section>:null}{chartError&&<section className="card error"><b>Transit compass could not be generated.</b> {chartError}</section>}
     {view==='compass'&&!mapFullscreen&&chart&&<div className="layout main"><section className="wheel-card"><ZodiacWheel chart={chart} natalAsc={natalChart?.asc} natalMc={natalChart?.mc} natalPlanets={natalPlanets} natalBirthBearing={natalBirthBearing} planets={planets} selectedPlanet={selected} onSelectPlanet={choosePlanet} selectedHouse={selectedHouse} onSelectHouse={chooseHouse} destinationBearing={bearing} followingPlanetId={followingPlanetId} onCenterRequest={()=>{setView('map');setCenterRouteRequest(v=>v+1)}}/></section><div className="stack"><LiveTrackingControls mode={trackingMode} onModeChange={changeTrackingMode} gps={gps} gpsError={gpsError} movedMeters={movedMeters} lastAnalysisAt={lastAnalysisAt}/><JourneyDirectionsPanel planet={followedPlanet} routeData={routeData} analysis={routeAnalysis} departureDate={date}/><OutcomeFeedback reading={reading}/></div></div>}
     {view==='map'&&<div className={`${mapFullscreen?'fullscreen-map-wrap':'mission-map-wrap'} ${fullscreenSettling?'map-transitioning':''}`}>
