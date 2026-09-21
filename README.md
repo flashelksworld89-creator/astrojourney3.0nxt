@@ -58,3 +58,29 @@ See `ASTROCARTOGRAPHY_METHOD.md` for the research/implementation model and thres
 
 ### v3.6.7
 Fullscreen predictions are now organized into separate Planet Prediction and House Prediction narrative sections with paragraph-style explanations and expandable astrological basis.
+
+## 3.6.7 Prediction Formula Rebuild
+This rebuild keeps the 3.6.7 Mission Screen Crash Repair interface/map baseline and replaces the prediction core with AstroWalk Route Synthesis Formula 1.
+
+Prediction chain:
+Transit planet → natal house cusp → house sign → house nakshatra/pada → natal occupants → natal house lord → current transit placement of that lord → aspects to/from the 1st, 3rd, 7th and 9th lords → current-location field → route field transitions → destination field → natal Moon → transiting Moon.
+
+Default route-lord priorities:
+- H1: self, body, decisions and initiative
+- H3: communication, errands, local travel, roads and short journeys
+- H7: other people, clients, agreements, contracts and direct encounters
+- H9: long journeys, guidance, unfamiliar territory, teachers and broader travel circumstances
+
+Aspects used:
+- conjunction 0°
+- sextile 60°
+- square 90°
+- trine 120°
+- quincunx/inconjunction 150°
+- opposition 180°
+
+The engine also marks transit-to-fixed-natal contacts as applying, exact or separating when transit speed is available. The Moon layer compares natal Moon, transiting Moon, priority lords, departure field and destination field to produce mindset/action and encounter context.
+
+Visible journey output is divided into Self / Mindset, Journey / Movement and Encounters / Others, with detailed astrological-basis triggers retained in planet and house forecast panels.
+
+Deployment note: Node is pinned to 24.x for current Vercel compatibility.

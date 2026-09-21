@@ -172,7 +172,7 @@ function houseForecast(h,body,vocab){
 }
 
 function focusConfiguration(body){
-  const pinned=[1,3,7];
+  const pinned=[1,3,7,9];
   const houses=uniq([...(Array.isArray(body.focusHouses)?body.focusHouses:[]),...pinned]).map(Number).filter(h=>h>=1&&h<=12);
   const lords=uniq([...(Array.isArray(body.focusLords)?body.focusLords:[]),...pinned]).map(Number).filter(h=>h>=1&&h<=12);
   return {houses,lords};
@@ -203,7 +203,7 @@ function locationAstrologySummary(body){
 }
 function focusedJourneySummary(body,planetForecasts){
   const ev=focusEvidence(body);
-  const special={1:'self, body, identity and personal initiative',3:'communication, errands, skills and short-distance travel',7:'other people, contracts, clients and business relationships'};
+  const special={1:'self, body, identity and personal initiative',3:'communication, errands, skills and short-distance travel',7:'other people, contracts, clients and business relationships',9:'long journeys, guidance, unfamiliar territory, teachers and broader travel conditions'};
   const lines=[];
   for(const h of ev.focus.lords){
     const row=(body.houseLords||[]).find(x=>Number(x.house)===h);
@@ -243,6 +243,92 @@ function summaryForecast(body,planetForecasts){
 }
 
 
+function evidenceAspectText(item){
+  if(!item?.aspect)return'';
+  return `${String(item.aspect.type||'aspect').toLowerCase()} (${Number(item.aspect.orb||0).toFixed(2)}° orb${item.aspect.phase?`, ${item.aspect.phase}`:''})`;
+}
+function formulaPlanetOverlay(pid,body,forecast){
+  const ev=body.formulaEvidence;if(!ev)return forecast;
+  const houseHits=(ev.transitToNatalHouses||[]).filter(x=>x.transit?.id===pid).slice(0,4);
+  const lordHits=[];
+  for(const chain of ev.routeLordChains||[]){
+    for(const hit of chain.aspectsToNatalLord||[])if(hit.transit?.id===pid)lordHits.push({chain,hit});
+  }
+  const currentHits=(ev.currentLocation?.aspects||[]).filter(x=>x.planet?.id===pid).slice(0,2);
+  const destHits=(ev.destination?.aspects||[]).filter(x=>x.planet?.id===pid).slice(0,2);
+  const triggers=[...(forecast.triggers||[])];
+  for(const h of houseHits){
+    const c=h.houseContext||{};
+    const occ=(c.occupants||[]).map(x=>x.name).join(', ');
+    triggers.push(`${h.transit?.name||pid} ${evidenceAspectText(h)} natal House ${h.house} cusp in ${c.sign||'—'} / ${c.nakshatra||'—'}${occ?`; natal occupants: ${occ}`:''}${c.lord?.lordName?`; house lord ${c.lord.lordName}`:''}.`);
+  }
+  for(const x of lordHits.slice(0,4))triggers.push(`${x.hit.transit?.name||pid} ${evidenceAspectText(x.hit)} the natal House ${x.chain.house} lord ${x.chain.natalLord?.lordName}; that lord is currently transiting ${x.chain.currentTransitPlacement?.sign||'—'} House ${x.chain.currentTransitPlacement?.house||'—'} / ${x.chain.currentTransitPlacement?.nakshatra||'—'}.`);
+  currentHits.forEach(x=>triggers.push(`${x.planet?.name||pid} ${evidenceAspectText(x)} the current-location field (${ev.currentLocation?.field?.sign||'—'}, ${ev.currentLocation?.field?.nakshatra||'—'}, House ${ev.currentLocation?.field?.house||'—'}).`));
+  destHits.forEach(x=>triggers.push(`${x.planet?.name||pid} ${evidenceAspectText(x)} the destination field (${ev.destination?.field?.sign||'—'}, ${ev.destination?.field?.nakshatra||'—'}, House ${ev.destination?.field?.house||'—'}).`));
+  const explicit=houseHits.map(h=>`House ${h.house} (${(h.houseContext?.topics||[]).slice(0,3).join(', ')})`).filter(Boolean);
+  return {...forecast,
+    headline:explicit.length?`${forecast.headline} Primary formula contacts: ${explicit.join('; ')}.`:forecast.headline,
+    eventText:lordHits.length?`${forecast.eventText} Route-lord chain: ${lordHits.slice(0,2).map(x=>`House ${x.chain.house} lord ${x.chain.natalLord?.lordName} now in ${x.chain.currentTransitPlacement?.sign||'—'} House ${x.chain.currentTransitPlacement?.house||'—'}`).join('; ')}.`:forecast.eventText,
+    destinationText:destHits.length?`${forecast.destinationText} This planet directly aspects the destination astrological field.`:forecast.destinationText,
+    triggers:uniq(triggers)
+  };
+}
+function formulaHouseOverlay(h,body,forecast){
+  const ev=body.formulaEvidence;if(!ev)return forecast;
+  const hits=(ev.transitToNatalHouses||[]).filter(x=>Number(x.house)===Number(h)).slice(0,6);
+  if(!hits.length)return forecast;
+  const c=hits[0].houseContext||{};
+  const occ=(c.occupants||[]).map(x=>x.name).join(', ');
+  const triggers=[...(forecast.triggers||[]),...hits.map(x=>`${x.transit?.name} ${evidenceAspectText(x)} House ${h} cusp in ${c.sign||'—'} / ${c.nakshatra||'—'}${c.lord?.lordName?`, ruled by ${c.lord.lordName}`:''}.`)];
+  return {...forecast,
+    headline:`House ${h} (${c.sign||'—'} / ${c.nakshatra||'—'}) is being activated by ${hits.map(x=>`${x.transit?.name} ${String(x.aspect?.type||'').toLowerCase()}`).join(', ')}.`,
+    eventText:`This house carries ${joinNatural((c.topics||[]).slice(0,5))}.${occ?` Natal occupants here: ${occ}.`:''} ${forecast.eventText}`,
+    triggers:uniq(triggers)
+  };
+}
+function moonFormulaText(body){
+  const m=body.formulaEvidence?.moon;if(!m?.transitMoon||!m?.natalMoon)return'';
+  const parts=[`Natal Moon: ${m.natalMoon.sign} House ${m.natalMoon.house}, ${m.natalMoon.nakshatra}. Transiting Moon: ${m.transitMoon.sign} House ${m.transitMoon.house}, ${m.transitMoon.nakshatra}.`];
+  if(m.moonToNatalMoon)parts.push(`The transiting Moon is ${evidenceAspectText({aspect:m.moonToNatalMoon})} the natal Moon, describing the immediate mental and emotional tone.`);
+  if(m.moonToPriorityLords?.length)parts.push(`The Moon also contacts ${m.moonToPriorityLords.slice(0,3).map(x=>`the House ${x.houses.join('/')} lord ${x.natalLord?.name} by ${evidenceAspectText(x)}`).join('; ')}.`);
+  const cf=m.currentLocation?.field,df=m.destination?.field;
+  if(cf)parts.push(`At departure the Moon is read against the current field: House ${cf.house||'—'}, ${cf.sign||'—'}, ${cf.nakshatra||'—'}.`);
+  if(df)parts.push(`At arrival it is compared with the destination field: House ${df.house||'—'}, ${df.sign||'—'}, ${df.nakshatra||'—'}, emphasizing the kinds of encounters likely to attract attention there.`);
+  return parts.join(' ');
+}
+function routeLordFormulaText(body){
+  const chains=body.formulaEvidence?.routeLordChains||[];
+  const labels={1:'Self / mindset',3:'Journey / local movement',7:'Encounters / others',9:'Long journey / guidance'};
+  return chains.map(c=>{
+    if(c.missing)return'';
+    const placement=c.currentTransitPlacement;
+    const hits=(c.aspectsToNatalLord||[]).slice(0,2);
+    return `${labels[c.house]||`House ${c.house}`}: natal lord ${c.natalLord?.lordName||'—'} is currently in ${placement?.sign||'—'} House ${placement?.house||'—'}, ${placement?.nakshatra||'—'}${hits.length?`; contacted by ${hits.map(x=>`${x.transit?.name} ${evidenceAspectText(x)}`).join(' and ')}`:''}.`;
+  }).filter(Boolean).join(' ');
+}
+function formulaSummary(body,planetForecasts){
+  const ev=body.formulaEvidence;
+  if(!ev)return summaryForecast(body,planetForecasts);
+  const current=ev.currentLocation?.field,dest=ev.destination?.field;
+  const route=ev.route||{};
+  const houseContacts=(ev.transitToNatalHouses||[]).slice(0,6).map(x=>`${x.transit?.name} ${String(x.aspect?.type||'').toLowerCase()} H${x.house}`).join(', ');
+  const routeTransitions=(route.fieldTransitions||[]).slice(0,8).map(x=>`H${x.house} ${x.nakshatra}`).join(' → ');
+  return `${routeLordFormulaText(body)} ${moonFormulaText(body)} ${houseContacts?`Strong natal-house contacts include ${houseContacts}. `:''}${current?`Departure field: House ${current.house||'—'}, ${current.sign||'—'}, ${current.nakshatra||'—'}. `:''}${dest?`Destination field: House ${dest.house||'—'}, ${dest.sign||'—'}, ${dest.nakshatra||'—'}. `:''}${routeTransitions?`Route field sequence: ${routeTransitions}. `:''}${route.gandanta?.length?`Gandanta crossings: ${route.gandanta.map(g=>g.label).join(', ')}. `:''}These are possibilities derived from the natal/transit/route synthesis, not guaranteed events.`;
+}
+function formulaCategories(body){
+  const ev=body.formulaEvidence;if(!ev)return null;
+  const chain=h=>(ev.routeLordChains||[]).find(x=>Number(x.house)===h);
+  const m=ev.moon;
+  const c1=chain(1),c3=chain(3),c7=chain(7),c9=chain(9);
+  const chainText=c=>c&&!c.missing?`${c.natalLord?.lordName} currently in ${c.currentTransitPlacement?.sign||'—'} House ${c.currentTransitPlacement?.house||'—'} / ${c.currentTransitPlacement?.nakshatra||'—'}`:'no verified lord chain';
+  return {
+    selfMindset:`1st lord: ${chainText(c1)}. ${moonFormulaText(body)}`,
+    journeyMovement:`3rd lord: ${chainText(c3)}. 9th lord: ${chainText(c9)}. Route houses: ${(ev.route?.houseSequence||[]).join(' → ')||'—'}. Route nakshatras: ${(ev.route?.nakshatraSequence||[]).join(' → ')||'—'}.`,
+    encountersOthers:`7th lord: ${chainText(c7)}. Destination: House ${ev.destination?.field?.house||'—'}, ${ev.destination?.field?.sign||'—'}, ${ev.destination?.field?.nakshatra||'—'}. Destination contacts: ${(ev.destination?.aspects||[]).slice(0,4).map(x=>`${x.planet?.name} ${String(x.aspect?.type||'').toLowerCase()}`).join(', ')||'none within the configured orb'}.`
+  };
+}
+
+
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
@@ -252,8 +338,8 @@ export async function POST(request){
     const planets=Array.isArray(body.planets)?body.planets:[];
     if(!planets.length)return Response.json({error:'No planetary data supplied'},{status:400});
     const vocab=readVocabulary();
-    const planetPredictions={};for(const p of planets)planetPredictions[p.id]=planetForecast(p,body,vocab);
-    const housePredictions={};for(let h=1;h<=12;h++)housePredictions[h]=houseForecast(h,body,vocab);
+    const planetPredictions={};for(const p of planets)planetPredictions[p.id]=formulaPlanetOverlay(p.id,body,planetForecast(p,body,vocab));
+    const housePredictions={};for(let h=1;h<=12;h++)housePredictions[h]=formulaHouseOverlay(h,body,houseForecast(h,body,vocab));
     const natalUsage={
       natalAsc:Number(body.natalAsc),
       natalPlanetCount:Array.isArray(body.natalPlanets)?body.natalPlanets.length:0,
@@ -264,7 +350,7 @@ export async function POST(request){
       verified:Boolean(Number.isFinite(Number(body.natalAsc))&&Array.isArray(body.natalPlanets)&&body.natalPlanets.length>=9&&Array.isArray(body.natalHouseCusps)&&body.natalHouseCusps.length===12)
     };
     const focus=focusEvidence(body);
-    return Response.json({summary:summaryForecast(body,planetPredictions),planetPredictions,housePredictions,destinationZone:body.destinationZone||{},transitNatalAspects:body.transitNatalAspects||[],natalUsage,focusAnalysis:{...focus,locationAstrology:locationAstrologySummary(body)},modelVersion:'context-synthesis-7-lords-route-location'});
+    return Response.json({summary:formulaSummary(body,planetPredictions),formulaPrediction:formulaCategories(body),formulaEvidence:body.formulaEvidence||null,planetPredictions,housePredictions,destinationZone:body.destinationZone||{},transitNatalAspects:body.transitNatalAspects||[],natalUsage,focusAnalysis:{...focus,locationAstrology:locationAstrologySummary(body)},modelVersion:'astrowalk-3.6.7-route-synthesis-formula-1'});
   }catch(e){
     console.error('Interpretation failed', e);
     return Response.json({error:'Interpretation failed'},{status:500});

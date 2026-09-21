@@ -29,10 +29,15 @@ export function analyzeJourneyRoute({path,cityCenter,chart}){
     return {...zone,point,bearing};
   }).filter(Boolean);
   if(!zones.length)return null;
-  const houses=[],naks=[];
+  const houses=[],naks=[],fieldTransitions=[];
   for(const z of zones){
+    const prior=fieldTransitions[fieldTransitions.length-1];
+    const nakName=z.nakshatra?.name||null;
     if(houses[houses.length-1]!==z.house)houses.push(z.house);
-    const n=z.nakshatra?.name;if(n&&naks[naks.length-1]!==n)naks.push(n);
+    if(nakName&&naks[naks.length-1]!==nakName)naks.push(nakName);
+    if(!prior||prior.house!==z.house||prior.nakshatra!==nakName){
+      fieldTransitions.push({house:z.house,sign:z.sign,nakshatra:nakName,pada:z.nakshatra?.pada||null,longitude:z.longitude,bearing:z.bearing,point:z.point});
+    }
   }
   const gandanta=[];
   for(let i=0;i<zones.length-1;i++){
@@ -44,6 +49,6 @@ export function analyzeJourneyRoute({path,cityCenter,chart}){
   return {
     start:{house:first.house,sign:first.sign,nakshatra:first.nakshatra?.name,longitude:first.longitude},
     end:{house:last.house,sign:last.sign,nakshatra:last.nakshatra?.name,longitude:last.longitude},
-    houseSequence:houses,nakshatraSequence:naks,houseCount:houses.length,nakshatraCount:naks.length,gandanta
+    houseSequence:houses,nakshatraSequence:naks,houseCount:houses.length,nakshatraCount:naks.length,fieldTransitions,gandanta
   };
 }
