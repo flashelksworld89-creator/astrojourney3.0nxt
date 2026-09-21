@@ -84,3 +84,18 @@ The engine also marks transit-to-fixed-natal contacts as applying, exact or sepa
 Visible journey output is divided into Self / Mindset, Journey / Movement and Encounters / Others, with detailed astrological-basis triggers retained in planet and house forecast panels.
 
 Deployment note: Node is pinned to 24.x for current Vercel compatibility.
+
+
+## v3.6.8 stability repair
+- Stops the prediction request loop caused by an unstable geographic zone object.
+- Debounces and deduplicates interpretation requests so forecasts regenerate only when meaningful astrology/route inputs change.
+- Keeps prediction status space height stable to prevent page/map vertical jumping.
+- Ignores insignificant (<2px) map viewport diameter changes to reduce React/map feedback churn.
+- Prediction formula and 3.6.7 map behavior are otherwise unchanged.
+
+
+## 3.6.9 Single Prediction Center
+- Consolidates all visible predictions into one Prediction Center.
+- Terminology only expands concrete manifestations after evidence synthesis.
+- Prose avoids redundant travel/movement wording and focuses on what may actually happen, who may be involved, and what may require a response.
+- Planet/house clicks change focus context but do not create separate prediction generators or panels.

@@ -329,6 +329,123 @@ function formulaCategories(body){
 }
 
 
+function topEvidenceItems(body){
+  const ev=body.formulaEvidence||{};
+  const weighted=[];
+  const aspectWeight={Conjunction:1.15,Opposition:1.0,Square:.95,Trine:.8,Sextile:.7,Quincunx:.72};
+  const add=(item,kind,extra=0)=>{
+    const orb=Number(item?.aspect?.orb??item?.orb??6);
+    const type=item?.aspect?.type||item?.type||'Aspect';
+    const phase=item?.aspect?.phase||item?.phase||'';
+    const score=(aspectWeight[type]||.6)+(Math.max(0,4-orb)/4)*.65+(phase==='exact'?.35:phase==='applying'?.18:0)+extra;
+    weighted.push({item,kind,score});
+  };
+  (ev.transitToNatalHouses||[]).forEach(x=>add(x,'house',[1,3,7,9].includes(Number(x.house))?.35:0));
+  for(const c of ev.routeLordChains||[]){
+    for(const x of c.aspectsToNatalLord||[])add({...x,ruledHouse:c.house,lordName:c.natalLord?.lordName},'lord',.5);
+  }
+  (ev.destination?.aspects||[]).forEach(x=>add(x,'destination',.35));
+  (ev.currentLocation?.aspects||[]).forEach(x=>add(x,'current',.15));
+  if(ev.moon?.moonToNatalMoon)add({planet:ev.moon.transitMoon,aspect:ev.moon.moonToNatalMoon},'moon',.45);
+  (ev.moon?.moonToPriorityLords||[]).forEach(x=>add({...x,planet:ev.moon.transitMoon},'moonLord',.5));
+  return weighted.sort((a,b)=>b.score-a.score);
+}
+function collectRelevantPlanetIds(body){
+  const ids=[];
+  for(const row of topEvidenceItems(body).slice(0,12)){
+    const x=row.item||{};
+    const id=x.transit?.id||x.planet?.id||x.transitId||null;
+    if(id&&!ids.includes(id))ids.push(id);
+  }
+  if(!ids.includes('moon'))ids.push('moon');
+  return ids.slice(0,6);
+}
+function topTerms(entries,limit=3){
+  return normalizeEntries(entries).sort((a,b)=>b.weight-a.weight).slice(0,limit).map(x=>x.term);
+}
+function terminologyExpansion(body,vocab){
+  const ids=collectRelevantPlanetIds(body);
+  const people=[],events=[],places=[],objects=[];
+  for(const id of ids){
+    const bank=vocab?.[id]||{};
+    people.push(...topTerms(bank.people,2));events.push(...topTerms(bank.events,2));places.push(...topTerms(bank.places,1));objects.push(...topTerms(bank.objects,1));
+    const k=KARAKA[id]||{};people.push(...(k.people||[]).slice(0,1));events.push(...(k.events||[]).slice(0,1));
+  }
+  return {people:uniq(people).slice(0,7),events:uniq(events).slice(0,7),places:uniq(places).slice(0,5),objects:uniq(objects).slice(0,5)};
+}
+function phaseWord(x){const p=x?.aspect?.phase||x?.phase;return p==='applying'?'developing':p==='exact'?'at peak strength':p==='separating'?'beginning to ease':''}
+function describeStrongEvidence(body){
+  return topEvidenceItems(body).slice(0,8).map(row=>{
+    const x=row.item||{},a=x.aspect||x;
+    if(row.kind==='house'){
+      const c=x.houseContext||{};return `${x.transit?.name||'A transit'} ${String(a.type||'aspects').toLowerCase()} natal House ${x.house} (${c.sign||'—'}, ${c.nakshatra||'—'}) at ${Number(a.orb||0).toFixed(2)}°${phaseWord(x)?`, ${phaseWord(x)}`:''}`;
+    }
+    if(row.kind==='lord')return `${x.transit?.name||'A transit'} ${String(a.type||'aspects').toLowerCase()} the natal House ${x.ruledHouse} lord ${x.lordName||''} at ${Number(a.orb||0).toFixed(2)}°${phaseWord(x)?`, ${phaseWord(x)}`:''}`;
+    if(row.kind==='destination')return `${x.planet?.name||'A transit'} ${String(a.type||'aspects').toLowerCase()} the destination field at ${Number(a.orb||0).toFixed(2)}°`;
+    if(row.kind==='moon'||row.kind==='moonLord')return `The transiting Moon ${String(a.type||'aspects').toLowerCase()} ${row.kind==='moon'?'the natal Moon':'a priority house lord'} at ${Number(a.orb||0).toFixed(2)}°`;
+    return `${x.planet?.name||x.transit?.name||'A transit'} ${String(a.type||'aspects').toLowerCase()} the current-location field at ${Number(a.orb||0).toFixed(2)}°`;
+  });
+}
+function lordSentence(body,house){
+  const c=(body.formulaEvidence?.routeLordChains||[]).find(x=>Number(x.house)===house);
+  if(!c||c.missing)return'';
+  const p=c.currentTransitPlacement||{};
+  const hits=(c.aspectsToNatalLord||[]).slice(0,2);
+  const contact=hits.length?` It is being contacted by ${hits.map(x=>`${x.transit?.name} ${String(x.aspect?.type||'aspect').toLowerCase()}${x.aspect?.phase?` (${x.aspect.phase})`:''}`).join(' and ')}.`:'';
+  return `The natal ${house}${house===1?'st':house===3?'rd':house===7?'th':'th'}-house lord ${c.natalLord?.lordName||'—'} is currently in ${p.sign||'—'} House ${p.house||'—'}${p.nakshatra?` in ${p.nakshatra}`:''}.${contact}`;
+}
+function buildPredictionCenter(body,vocab){
+  const ev=body.formulaEvidence||{};
+  const m=ev.moon||{},dest=ev.destination?.field||{},cur=ev.currentLocation?.field||{};
+  const manifestations=terminologyExpansion(body,vocab);
+  const basis=describeStrongEvidence(body);
+  const h3=(ev.transitToNatalHouses||[]).filter(x=>Number(x.house)===3).slice(0,2);
+  const h7=(ev.transitToNatalHouses||[]).filter(x=>Number(x.house)===7).slice(0,2);
+  const h9=(ev.transitToNatalHouses||[]).filter(x=>Number(x.house)===9).slice(0,2);
+  const mindset=[];
+  if(m.transitMoon&&m.natalMoon)mindset.push(`The transiting Moon is in ${m.transitMoon.sign} House ${m.transitMoon.house}, ${m.transitMoon.nakshatra}, while the natal Moon is in ${m.natalMoon.sign} House ${m.natalMoon.house}, ${m.natalMoon.nakshatra}.`);
+  if(m.moonToNatalMoon)mindset.push(`Their ${String(m.moonToNatalMoon.type||'aspect').toLowerCase()} is ${m.moonToNatalMoon.phase||'active'}, so reactions and judgment may be more immediately colored by the Moon than usual.`);
+  mindset.push(lordSentence(body,1));
+
+  const enRoute=[];
+  if(h3.length)enRoute.push(`${h3.map(x=>`${x.transit?.name} ${String(x.aspect?.type||'aspects').toLowerCase()} the natal 3rd-house cusp`).join(' and ')}, putting extra emphasis on messages, directions, timing, devices, errands, neighbors, vehicles, or decisions that need a response.`);
+  if(h9.length)enRoute.push(`${h9.map(x=>`${x.transit?.name} ${String(x.aspect?.type||'aspects').toLowerCase()} the natal 9th-house cusp`).join(' and ')}, adding broader travel conditions, guidance, unfamiliar territory, institutions, teachers, or belief-based decisions to the picture.`);
+  enRoute.push(lordSentence(body,3),lordSentence(body,9));
+  if(ev.route?.gandanta?.length)enRoute.push(`The route crosses ${ev.route.gandanta.map(g=>g.label).join(', ')}, so transitions around those boundaries deserve extra attention.`);
+
+  const people=[];
+  if(h7.length)people.push(`${h7.map(x=>`${x.transit?.name} ${String(x.aspect?.type||'aspects').toLowerCase()} the natal 7th-house cusp`).join(' and ')}, making another person's choices, cooperation, opposition, agreement, or intentions more consequential.`);
+  people.push(lordSentence(body,7));
+  const destContacts=(ev.destination?.aspects||[]).slice(0,3);
+  if(destContacts.length)people.push(`At the destination, ${destContacts.map(x=>`${x.planet?.name} ${String(x.aspect?.type||'aspects').toLowerCase()} the destination field`).join(', ')}, which can make the symbolism more literal through the people or circumstances encountered there.`);
+
+  const destination=[];
+  if(dest.house)destination.push(`The destination falls in House ${dest.house}, ${dest.sign||'—'}, ${dest.nakshatra||'—'}${dest.pada?` pada ${dest.pada}`:''}.`);
+  if(cur.house&&dest.house&&cur.house!==dest.house)destination.push(`The emphasis shifts from the current House ${cur.house} field to House ${dest.house} on arrival, so the conditions that matter most may change once you reach the destination.`);
+  if(ev.route?.fieldTransitions?.length)destination.push(`The route passes through ${ev.route.fieldTransitions.length} distinct astrological field transition${ev.route.fieldTransitions.length===1?'':'s'} before arrival.`);
+
+  const overall=[];
+  if(h3.length)overall.push(`Communication, timing, directions, devices, or a decision made in response to new information are likely to matter more than the ordinary fact of traveling.`);
+  if(h7.length||destContacts.length)overall.push(`Another person may become central to how events develop, especially through a conversation, agreement, client interaction, disagreement, request, or unexpected exchange.`);
+  if(m.moonToNatalMoon||m.moonToPriorityLords?.length)overall.push(`The Moon shows a heightened subjective layer, so mood, instinct, attention, and immediate reactions may strongly shape what you notice and how you respond.`);
+  if(!overall.length)overall.push(`The strongest testimony is concentrated in the currently activated natal houses, their lords, and the destination field; those contacts define what is most likely to become noticeable during this trip.`);
+  if(manifestations.events.length)overall.push(`Concrete manifestations may include ${joinNatural(manifestations.events.slice(0,4))}.`);
+
+  return {
+    overallProse:overall.join(' '),
+    sections:{
+      mindsetActions:mindset.filter(Boolean).join(' '),
+      developmentsEnRoute:enRoute.filter(Boolean).join(' '),
+      peopleEncounters:people.filter(Boolean).join(' '),
+      destinationConditions:destination.filter(Boolean).join(' ')
+    },
+    manifestations,
+    basis,
+    terminologyRule:'Terminology is used only to expand already-supported manifestations; it does not determine the astrological conclusion.'
+  };
+}
+
+
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
@@ -338,8 +455,7 @@ export async function POST(request){
     const planets=Array.isArray(body.planets)?body.planets:[];
     if(!planets.length)return Response.json({error:'No planetary data supplied'},{status:400});
     const vocab=readVocabulary();
-    const planetPredictions={};for(const p of planets)planetPredictions[p.id]=formulaPlanetOverlay(p.id,body,planetForecast(p,body,vocab));
-    const housePredictions={};for(let h=1;h<=12;h++)housePredictions[h]=formulaHouseOverlay(h,body,houseForecast(h,body,vocab));
+    const predictionCenter=buildPredictionCenter(body,vocab);
     const natalUsage={
       natalAsc:Number(body.natalAsc),
       natalPlanetCount:Array.isArray(body.natalPlanets)?body.natalPlanets.length:0,
@@ -350,7 +466,16 @@ export async function POST(request){
       verified:Boolean(Number.isFinite(Number(body.natalAsc))&&Array.isArray(body.natalPlanets)&&body.natalPlanets.length>=9&&Array.isArray(body.natalHouseCusps)&&body.natalHouseCusps.length===12)
     };
     const focus=focusEvidence(body);
-    return Response.json({summary:formulaSummary(body,planetPredictions),formulaPrediction:formulaCategories(body),formulaEvidence:body.formulaEvidence||null,planetPredictions,housePredictions,destinationZone:body.destinationZone||{},transitNatalAspects:body.transitNatalAspects||[],natalUsage,focusAnalysis:{...focus,locationAstrology:locationAstrologySummary(body)},modelVersion:'astrowalk-3.6.7-route-synthesis-formula-1'});
+    return Response.json({
+      summary:predictionCenter.overallProse,
+      predictionCenter,
+      formulaEvidence:body.formulaEvidence||null,
+      destinationZone:body.destinationZone||{},
+      transitNatalAspects:body.transitNatalAspects||[],
+      natalUsage,
+      focusAnalysis:{...focus,locationAstrology:locationAstrologySummary(body)},
+      modelVersion:'astrowalk-3.6.9-single-prediction-center'
+    });
   }catch(e){
     console.error('Interpretation failed', e);
     return Response.json({error:'Interpretation failed'},{status:500});
