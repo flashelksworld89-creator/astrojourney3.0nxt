@@ -1,3 +1,4 @@
+import { experienceProse, experienceSummary, NEURO_PROSE_MODEL } from './neuroProse.js';
 const PRIORITY_HOUSES = [1,3,7,9];
 const SIGN_LORDS = {
   Aries:'mars', Taurus:'venus', Gemini:'mercury', Cancer:'moon', Leo:'sun', Virgo:'mercury',
@@ -132,15 +133,7 @@ function clusterCandidates(cands){
 
 function predictionSentence(c){
   if(!c)return'';
-  const actor=cap(c.actor||'another person');
-  const object=c.object||'an important detail';
-  const place=c.place?` near ${c.place}`:'';
-  const concrete=c.terminologyEvent?` A concrete form of this could be ${c.terminologyEvent}.`:'';
-  const modifier=c.modifier?` ${cap(c.modifier)} may describe how it develops.`:'';
-  const dispositor=c.dispositorCondition?` The trigger may involve ${c.dispositorCondition}.`:'';
-  if(c.tone==='challenging')return `${actor} may become involved in a situation concerning ${object}${place}. The matter is more likely to require correction, negotiation, patience, or immediate action than to resolve by itself; ${c.condition||'pressure'} is the main complicating factor.${modifier}${dispositor}${concrete}`;
-  if(c.tone==='constructive')return `${actor} may become important through ${object}${place}. The situation has a better chance of producing help, agreement, useful information, or an opening if you respond to it directly; ${c.condition||'cooperation'} is the main supportive factor.${modifier}${dispositor}${concrete}`;
-  return `${actor} may bring ${object}${place} to your attention. A response, clarification, or change of plan may be needed, with ${c.condition||'changing circumstances'} shaping how it develops.${modifier}${dispositor}${concrete}`;
+  return experienceProse(c);
 }
 
 function moonMindsetProse(body,clusters){
@@ -221,6 +214,7 @@ function planetRoutePredictions(body,vocab,candidates){
       planetId:planet.id,planetName:planet.name,glyph:planet.glyph||'',sign:planet.sign,degree:planet.degree,house:planet.house,nakshatra:planet.nakshatra,pada:planet.pada,retrograde:planet.retrograde,
       score:Number((top?.score||0).toFixed(2)),
       prose,
+      experience:top?experienceSummary(top):null,
       manifestations:{
         events:uniq(own.slice(0,4).flatMap(c=>[c.terminologyEvent,c.action,c.modifier])).slice(0,5),
         people:uniq(own.slice(0,4).map(c=>c.actor)).slice(0,4),
@@ -245,7 +239,8 @@ export function buildEventDrivenPrediction(body,vocab){
     },
     manifestations:manifestations(groups),
     basis:basisLines(body,candidates),
+    neuroProseModel:NEURO_PROSE_MODEL,
     terminologyRule:'Private terminology is used only after the Vedic evidence establishes an event category. It supplies concrete people, objects, places and event forms; it does not create the astrological conclusion.',
-    candidates:candidates.slice(0,12).map(c=>({category:c.category,planet:c.planetName,house:c.house,score:Number(c.score.toFixed(2)),actor:c.actor,action:c.action,object:c.object,place:c.place,modifier:c.modifier,terminologyEvent:c.terminologyEvent}))
+    candidates:candidates.slice(0,12).map(c=>({category:c.category,planet:c.planetName,house:c.house,score:Number(c.score.toFixed(2)),actor:c.actor,action:c.action,object:c.object,place:c.place,modifier:c.modifier,terminologyEvent:c.terminologyEvent,experience:experienceSummary(c)}))
   };
 }

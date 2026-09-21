@@ -1,3 +1,7 @@
+# AstroWalk Journey 3.7.6 — Neuro-Experiential Vedic Prose
+
+This build preserves the 3.7.5 runtime/maps repair and replaces the visible prediction prose pipeline with a perception → recognition → decision → speech/motor-response model. See `NEURO_PROSE_MODEL.md`.
+
 # AstroWalk Journey 3.6.7 — Mission Screen Crash Repair
 
 Repairs the mission-screen runtime crash introduced in 3.6.6.

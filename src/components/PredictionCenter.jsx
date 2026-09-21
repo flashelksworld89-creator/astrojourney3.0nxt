@@ -13,6 +13,7 @@ function PlanetPredictionCard({item,active,onSelect}){
       {item.retrograde&&<em>R</em>}
     </button>
     <p>{item.prose}</p>
+    {item.experience&&<details className="prediction-center-experience"><summary>Experience sequence</summary><div className="experience-sequence-grid"><div><b>Notice</b><p>{item.experience.notice}</p></div><div><b>Recognize</b><p>{item.experience.recognize}</p></div><div><b>Decide</b><p>{item.experience.decide}</p></div>{item.experience.speak&&<div><b>Speech</b><p>{item.experience.speak}</p></div>}<div><b>Action</b><p>{item.experience.act}</p></div></div></details>}
     <div className="planet-route-manifest-row">
       <Chips title="Events" items={item.manifestations?.events}/>
       <Chips title="People" items={item.manifestations?.people}/>

@@ -74,7 +74,7 @@ export async function POST(request){
       destinationZone:body.destinationZone||{},
       transitNatalAspects:body.transitNatalAspects||[],
       natalUsage:natalUsage(body),
-      modelVersion:'astrowalk-3.7.1-planet-route-forecasts'
+      modelVersion:'astrowalk-3.7.6-neuro-experiential-vedic-prose'
     });
   }catch(error){
     console.error('Event-driven interpretation failed',error);
