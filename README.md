@@ -128,3 +128,9 @@ Deployment note: Node is pinned to 24.x for current Vercel compatibility.
 - Moves URL admin-mode detection and saved-mission restoration into `useEffect` after browser mount.
 - Makes localStorage reads/writes non-fatal when browser storage is unavailable.
 - Preserves the 3.7.2 geocoder fallback behavior and 3.7.1 per-planet route forecasts.
+
+## 3.7.4 runtime isolation repair
+- Mission engine is client-only and lazy-loaded after setup.
+- Keyword manager is client-only and lazy-loaded.
+- Added React runtime boundary so mission exceptions display inside the app instead of blanking the page.
+- Preserves 3.7.3 geocoder fallback and 3.7.1 planet-route forecast architecture.

@@ -1,9 +1,57 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import MissionSetup from './components/MissionSetup';
-import MissionView from './components/MissionView';
-import KeywordManager from './components/KeywordManager';
+
+const MissionView = dynamic(() => import('./components/MissionView'), {
+  ssr: false,
+  loading: () => (
+    <main className="app">
+      <section className="card loading-chart">Loading mission engine…</section>
+    </main>
+  ),
+});
+
+const KeywordManager = dynamic(() => import('./components/KeywordManager'), {
+  ssr: false,
+  loading: () => (
+    <main className="app">
+      <section className="card loading-chart">Loading terminology manager…</section>
+    </main>
+  ),
+});
+
+class RuntimeBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('AstroWalk runtime error:', error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main className="app">
+          <section className="card error">
+            <b>AstroWalk could not open this section.</b>
+            <p>{this.state.error?.message || 'An unexpected browser error occurred.'}</p>
+            <button type="button" onClick={() => window.location.reload()}>Reload</button>
+            {this.props.onBack && <button type="button" onClick={this.props.onBack}>Back to setup</button>}
+          </section>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function AstroWalkClient() {
   const [adminMode, setAdminMode] = useState(false);
@@ -62,8 +110,7 @@ export default function AstroWalkClient() {
     try {
       window.localStorage?.setItem('astrowalk_last_mission', JSON.stringify(data));
     } catch {
-      // Storage can be blocked in private/restricted browser modes. The mission
-      // should still start normally even when persistence is unavailable.
+      // Persistence is optional; the mission should still start.
     }
     setMission(data);
     setScreen('mission');
@@ -74,15 +121,19 @@ export default function AstroWalkClient() {
   }
 
   if (adminMode) {
-    return <div className="app"><KeywordManager /></div>;
+    return <RuntimeBoundary><div className="app"><KeywordManager /></div></RuntimeBoundary>;
   }
 
   return (
     <div className="app">
       {screen === 'setup' ? (
-        <MissionSetup initial={mission} gps={gps} gpsError={gpsError} onStart={startMission} />
+        <RuntimeBoundary>
+          <MissionSetup initial={mission} gps={gps} gpsError={gpsError} onStart={startMission} />
+        </RuntimeBoundary>
       ) : (
-        <MissionView mission={mission} gps={gps} gpsError={gpsError} onBack={() => setScreen('setup')} />
+        <RuntimeBoundary onBack={() => setScreen('setup')}>
+          <MissionView mission={mission} gps={gps} gpsError={gpsError} onBack={() => setScreen('setup')} />
+        </RuntimeBoundary>
       )}
     </div>
   );
