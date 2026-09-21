@@ -9,7 +9,7 @@ export default function PredictionCenter({data,busy,selectedPlanet,selectedHouse
   const focus=selectedPlanet?`${selectedPlanet.glyph||''} ${selectedPlanet.name}`:selectedHouse?`House ${selectedHouse}`:'Overall journey';
   return <section className="card prediction-center" aria-label="Prediction center">
     <div className="prediction-center-header">
-      <div><small>ONE SYNTHESIS ENGINE</small><div className="section-title"><Sparkles size={14}/> Prediction Center <span>{focus}</span></div></div>
+      <div><small>VEDIC EVENT SYNTHESIS</small><div className="section-title"><Sparkles size={14}/> Prediction Center <span>{focus}</span></div></div>
       {busy&&<div className="prediction-center-busy"><Loader2 className="spin" size={14}/> Updating</div>}
     </div>
     {!data?<p className="prediction-center-empty">The prediction will appear here after the natal chart, transit chart, and destination field are ready.</p>:<>
@@ -21,7 +21,7 @@ export default function PredictionCenter({data,busy,selectedPlanet,selectedHouse
         <div><b>Destination Conditions</b><p>{data.sections?.destinationConditions||`Destination field${destinationZone?.house?` is House ${destinationZone.house}`:''}.`}</p></div>
       </div>
       <div className="prediction-center-manifestations">
-        <small>Possible concrete manifestations</small>
+        <small>Concrete manifestations supported by the testimony</small>
         <div className="prediction-center-manifest-grid">
           <Chips title="Events" items={data.manifestations?.events}/>
           <Chips title="People" items={data.manifestations?.people}/>

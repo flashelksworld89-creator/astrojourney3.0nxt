@@ -99,3 +99,10 @@ Deployment note: Node is pinned to 24.x for current Vercel compatibility.
 - Terminology only expands concrete manifestations after evidence synthesis.
 - Prose avoids redundant travel/movement wording and focuses on what may actually happen, who may be involved, and what may require a response.
 - Planet/house clicks change focus context but do not create separate prediction generators or panels.
+
+## 3.7.0 Event-Driven Vedic Prediction Rewrite
+- Replaces chart-description prose with an event-candidate engine.
+- Vedic evidence is calculated first; technical details are shown only under Astrological Basis.
+- Uses house activation, priority lords (1/3/7/9), Moon testimony, destination contacts, applying/exact/separating phase, nakshatra modifiers, and dispositor state.
+- Hidden planet terminology is applied only after an event category is established, supplying concrete people, events, places, and objects.
+- Visible prose is required to describe possible situations rather than restating placements/aspects.
