@@ -15,7 +15,7 @@ import LiveTrackingControls from './LiveTrackingControls';
 import {computeChart,computeNatalChart,calculateHouseLords,buildJourneyReading,bearingBetween,destinationZoneFromBearing,distanceKmBetween,geographicHouseFromBearing,formatDistance,calculateLocalSpaceDirections,localSpaceRouteContacts} from '../lib/astro';
 import { requestPrivateInterpretation } from '../lib/privateInterpretation';
 import { analyzeJourneyRoute } from '../lib/journeyRoute';
-import { geocodePlace } from '../lib/googleMaps';
+import { geocodePlace, loadGoogleMaps } from '../lib/googleMaps';
 
 
 
