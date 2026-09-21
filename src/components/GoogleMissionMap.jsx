@@ -31,7 +31,8 @@ export default function GoogleMissionMap({
   streetLocation,
   highlightRoad=null,
   travelMode='walk',
-  onRouteUpdate
+  onRouteUpdate,
+  centerRouteRequest=0
 }) {
   const el=useRef(null),mapRef=useRef(null),mapsRef=useRef(null),userMarkerRef=useRef(null),analysisMarkerRef=useRef(null),destMarkerRef=useRef(null),routeRef=useRef(null),scaleCircleRef=useRef(null),cityMarkerRef=useRef(null),highlightRoadRef=useRef(null),directionsRendererRef=useRef(null),directionsServiceRef=useRef(null),initialized=useRef(false),panoramaRef=useRef(null),resolvedCityKey=useRef(''),userMarkerAnimRef=useRef(0);
   const [error,setError]=useState('');
@@ -307,6 +308,20 @@ export default function GoogleMissionMap({
     });
     return()=>{cancelled=true};
   },[location?.lat,location?.lng,destination?.lat,destination?.lng,travelMode]);
+
+  useEffect(()=>{
+    const maps=mapsRef.current,map=mapRef.current;
+    if(!centerRouteRequest||!maps||!map||!location||!destination)return;
+    const bounds=new maps.LatLngBounds();
+    bounds.extend(location);
+    bounds.extend(destination);
+    map.fitBounds(bounds,fullscreen?120:90);
+    window.setTimeout(()=>{
+      const z=Number(map.getZoom?.());
+      if(Number.isFinite(z)&&z>16)map.setZoom(16);
+      publishCityViewport();
+    },120);
+  },[centerRouteRequest]);
 
   useEffect(()=>{
     const maps=mapsRef.current,map=mapRef.current;

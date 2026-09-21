@@ -251,3 +251,18 @@
 .fullscreen-journey-summary{margin-bottom:10px;padding:9px 10px;border-radius:10px;background:rgba(244,200,66,.06);border:1px solid rgba(244,200,66,.16)}.fullscreen-journey-summary small{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:#f4c842}.fullscreen-journey-summary p{margin:5px 0 0;font-size:10px;line-height:1.5;color:#dce5f2}
 .fullscreen-prediction-body .forecast-detail{gap:8px}.fullscreen-prediction-body .forecast-grid{grid-template-columns:1fr}.fullscreen-prediction-body .forecast-grid>div{padding:8px}.fullscreen-prediction-body .forecast-detail p{font-size:10px;line-height:1.45}
 @media(max-width:720px){.fullscreen-prediction-drawer{left:8px;right:8px;bottom:70px;width:auto}.fullscreen-prediction-body{max-height:58vh}.fullscreen-prediction-tab{align-self:flex-end}.fullscreen-prediction-tab b{max-width:120px}}
+
+
+/* v3.6.5 compass clarity + fullscreen forecast box */
+.map-wheel-overlay .wheel-canvas.compact{filter:drop-shadow(0 2px 4px rgba(0,0,0,.9)) contrast(1.05)!important;cursor:pointer!important}
+.map-wheel-overlay::before{background:radial-gradient(circle,rgba(2,6,23,.04) 0 41%,rgba(2,6,23,.10) 42% 70%,rgba(2,6,23,.19) 71% 100%)!important}
+.compass-overlay-label{font-size:9px!important;font-weight:900!important;letter-spacing:.17em!important;padding:5px 9px!important}
+
+.fullscreen-prediction-box{position:absolute;z-index:1260;top:76px;right:14px;width:min(390px,calc(100% - 28px));pointer-events:auto;border:1px solid rgba(244,200,66,.42);border-radius:14px;background:rgba(3,7,18,.94);box-shadow:0 12px 36px rgba(0,0,0,.38);backdrop-filter:blur(14px);overflow:hidden}
+.fullscreen-prediction-box.collapsed{width:min(300px,calc(100% - 28px))}
+.fullscreen-prediction-toggle{width:100%;min-height:46px;display:grid;grid-template-columns:auto minmax(0,1fr) 26px;gap:8px;align-items:center;border:0;background:rgba(255,255,255,.025);color:#fff;padding:9px 11px;cursor:pointer;text-align:left}
+.fullscreen-prediction-toggle:hover{background:rgba(244,200,66,.06)}
+.prediction-toggle-title{display:flex;align-items:center;gap:6px;color:#fff7c2;white-space:nowrap}.prediction-toggle-title b{font-size:11px}.prediction-toggle-focus{font-size:9px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.prediction-toggle-icon{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;border:1px solid rgba(255,255,255,.12);font-size:17px;color:#fff}
+.fullscreen-prediction-content{max-height:min(66vh,620px);overflow:auto;padding:0 12px 12px}.fullscreen-prediction-content .fullscreen-prediction-head{position:sticky;top:0;margin:0 -12px 10px;padding:10px 12px;background:rgba(3,7,18,.98);border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.08)}
+.fullscreen-prediction-content .forecast-grid{grid-template-columns:1fr}.fullscreen-prediction-content .forecast-detail p{font-size:10px;line-height:1.48}.fullscreen-prediction-content .forecast-grid>div{padding:8px}.fullscreen-prediction-content .fullscreen-journey-summary{margin-bottom:9px;padding:8px 9px;border:1px solid rgba(244,200,66,.14);border-radius:9px;background:rgba(244,200,66,.035)}
+@media(max-width:720px){.fullscreen-prediction-box,.fullscreen-prediction-box.collapsed{top:auto;left:8px;right:8px;bottom:72px;width:auto}.fullscreen-prediction-content{max-height:54vh}.fullscreen-prediction-toggle{grid-template-columns:auto minmax(0,1fr) 26px}}

@@ -80,7 +80,8 @@ export default function ZodiacWheel({
   userGeoBearing = null,
   userGeoDistanceMeters = null,
   geoRadiusMeters = null,
-  geographicHouse = null
+  geographicHouse = null,
+  onCenterRequest = null
 }) {
   const ref = useRef(null);
   const size = 760;
@@ -380,7 +381,7 @@ export default function ZodiacWheel({
       let textRotation = rad(screen - 90);
       if (screen > 180) textRotation += Math.PI;
       ctx.rotate(textRotation);
-      ctx.font = compact ? '800 8px Inter, sans-serif' : '800 10px Inter, sans-serif';
+      ctx.font = compact ? '900 9px Inter, sans-serif' : '900 11px Inter, sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.shadowColor = 'rgba(0,0,0,.95)';
       ctx.shadowBlur = 4;
@@ -410,7 +411,7 @@ export default function ZodiacWheel({
       ctx.stroke();
 
       const [x, y] = point(i * 30 + 15, (zodiacOuter + zodiacInner) / 2);
-      ctx.font = compact ? '20px Georgia, serif' : '26px Georgia, serif';
+      ctx.font = compact ? '22px Georgia, serif' : '28px Georgia, serif';
       ctx.fillStyle = 'rgba(248,250,252,.96)';
       ctx.shadowColor = 'rgba(0,0,0,.95)';
       ctx.shadowBlur = 4;
@@ -450,7 +451,7 @@ export default function ZodiacWheel({
       ctx.stroke();
 
       const [x, y] = point(cusp + span / 2, (houseOuter + houseInner) / 2);
-      ctx.font = compact ? '800 11px Inter, sans-serif' : '800 14px Inter, sans-serif';
+      ctx.font = compact ? '900 12px Inter, sans-serif' : '900 15px Inter, sans-serif';
       ctx.fillStyle = geoActive ? '#BFDBFE' : active ? '#FFF7C2' : '#F8FAFC';
       ctx.shadowColor = 'rgba(0,0,0,.95)';
       ctx.shadowBlur = 3;
@@ -621,7 +622,7 @@ export default function ZodiacWheel({
       ctx.lineWidth = selected ? 1.1 : .55;
       ctx.stroke();
 
-      ctx.font = selected ? '22px Georgia, serif' : '18px Georgia, serif';
+      ctx.font = selected ? '25px Georgia, serif' : '20px Georgia, serif';
       ctx.fillStyle = selected ? '#FFFBEA' : GOLD;
       ctx.shadowColor = 'rgba(0,0,0,.9)';
       ctx.shadowBlur = 2;
@@ -649,7 +650,7 @@ export default function ZodiacWheel({
         ctx.strokeStyle = 'rgba(232,121,249,.62)';
         ctx.lineWidth = .8;
         ctx.stroke();
-        ctx.font = compact ? '13px Georgia, serif' : '15px Georgia, serif';
+        ctx.font = compact ? '14px Georgia, serif' : '16px Georgia, serif';
         ctx.fillStyle = 'rgba(245,208,254,.90)';
         ctx.shadowColor = 'rgba(0,0,0,.95)';
         ctx.shadowBlur = 3;
@@ -686,32 +687,66 @@ export default function ZodiacWheel({
       ctx.lineWidth = isEast ? 1.8 : 1.2;
       ctx.stroke();
 
-      ctx.font = cardinal ? '800 17px Inter, sans-serif' : '750 10px Inter, sans-serif';
+      ctx.font = cardinal ? '900 19px Inter, sans-serif' : '800 11px Inter, sans-serif';
       ctx.fillStyle = isEast ? '#FFF7C2' : cardinal ? '#FFE9A6' : '#F8E7A0';
-      ctx.shadowColor = 'rgba(0,0,0,.95)';
-      ctx.shadowBlur = 3;
+      ctx.shadowColor = 'rgba(0,0,0,.98)';
+      ctx.shadowBlur = 5;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(label, x, y + .5);
+      ctx.shadowBlur = 0;
+
+      // The live horizon is explicit on the compass: East = ASC, West = DC.
+      if (label === 'E' || label === 'W') {
+        const horizonLabel = label === 'E' ? 'ASC' : 'DC';
+        const sy = y + badgeH / 2 + 12;
+        const sw = 32, sh = 16;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x - sw/2, sy - sh/2, sw, sh, 6); else ctx.rect(x - sw/2, sy - sh/2, sw, sh);
+        ctx.fillStyle = 'rgba(15,41,76,.94)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(96,165,250,.98)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.font = '900 9px Inter, sans-serif';
+        ctx.fillStyle = '#DBEAFE';
+        ctx.shadowColor = 'rgba(0,0,0,.98)';
+        ctx.shadowBlur = 3;
+        ctx.fillText(horizonLabel, x, sy + .2);
+      }
       ctx.restore();
     });
 
     // Live / transit Ascendant. Wheel rotation locks it to East.
-    const ascRadius = houseOuter + 6;
-    const [tx, ty] = point(chart.asc, ascRadius);
-    ctx.beginPath();
-    ctx.arc(tx, ty, compact ? 5.8 : 7, 0, Math.PI * 2);
-    ctx.fillStyle = BLUE;
-    ctx.fill();
-    ctx.strokeStyle = WHITE;
-    ctx.lineWidth = 1.25;
-    ctx.stroke();
-    if (!compact) {
-      ctx.font = '700 8.5px Inter, sans-serif';
-      ctx.fillStyle = '#BFDBFE';
-      ctx.textAlign = 'left';
-      ctx.fillText(`TRANSIT ASC · ${getSignData(chart.asc).label}`, tx + 11, ty - 1);
-    }
+    const ascRadius = houseOuter + 8;
+    const liveAngles = [
+      ['ASC', chart.asc],
+      ['DC', norm(chart.asc + 180)]
+    ];
+    liveAngles.forEach(([label, lon]) => {
+      const [tx, ty] = point(lon, ascRadius);
+      ctx.beginPath();
+      ctx.arc(tx, ty, compact ? 7 : 8.5, 0, Math.PI * 2);
+      ctx.fillStyle = BLUE;
+      ctx.fill();
+      ctx.strokeStyle = WHITE;
+      ctx.lineWidth = 1.7;
+      ctx.stroke();
+      ctx.font = compact ? '900 7px Inter, sans-serif' : '900 8px Inter, sans-serif';
+      ctx.fillStyle = '#EFF6FF';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, tx, ty + .2);
+      if (!compact && label === 'ASC') {
+        ctx.font = '800 9px Inter, sans-serif';
+        ctx.fillStyle = '#BFDBFE';
+        ctx.textAlign = 'left';
+        ctx.shadowColor = 'rgba(0,0,0,.95)';
+        ctx.shadowBlur = 3;
+        ctx.fillText(`NOW · ${getSignData(chart.asc).label}`, tx + 13, ty - 1);
+        ctx.shadowBlur = 0;
+      }
+    });
 
     // Natal chart angles are subtle outer-rim references. They do not change
     // the transit wheel; they show the traveler where the natal axes intersect it.
@@ -729,21 +764,31 @@ export default function ZodiacWheel({
         ctx.beginPath();
         ctx.moveTo(ix, iy);
         ctx.lineTo(ax, ay);
-        ctx.strokeStyle = 'rgba(255,233,166,.78)';
-        ctx.lineWidth = 1.1;
+        ctx.strokeStyle = 'rgba(232,121,249,.78)';
+        ctx.lineWidth = 1.3;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(ax, ay, compact ? 10 : 12, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(20,14,28,.88)';
+        ctx.arc(ax, ay, compact ? 10.5 : 12.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(35,14,50,.94)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,233,166,.95)';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(245,208,254,.98)';
+        ctx.lineWidth = 1.6;
         ctx.stroke();
-        ctx.font = compact ? '800 7px Inter, sans-serif' : '800 8px Inter, sans-serif';
-        ctx.fillStyle = '#FFF7C2';
+        ctx.font = compact ? '900 7.5px Inter, sans-serif' : '900 8.5px Inter, sans-serif';
+        ctx.fillStyle = '#F5D0FE';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(label, ax, ay + .3);
+        ctx.shadowColor = 'rgba(0,0,0,.95)';
+        ctx.shadowBlur = 3;
+        ctx.fillText(label, ax, ay + .2);
+        ctx.shadowBlur = 0;
+        if (label === 'ASC') {
+          const sign = ay >= cy ? 1 : -1;
+          ctx.font = compact ? '900 7px Inter, sans-serif' : '900 8px Inter, sans-serif';
+          ctx.fillStyle = '#F5D0FE';
+          ctx.textBaseline = sign > 0 ? 'top' : 'bottom';
+          ctx.fillText('NTL', ax, ay + sign * (compact ? 13 : 15));
+        }
       });
     }
 
@@ -835,11 +880,19 @@ export default function ZodiacWheel({
     ctx.lineWidth = 1.0;
     ctx.stroke();
     if (cityCentered) {
-      ctx.font = compact ? '800 7px Inter, sans-serif' : '800 9px Inter, sans-serif';
+      ctx.font = compact ? '900 7.5px Inter, sans-serif' : '900 9.5px Inter, sans-serif';
       ctx.fillStyle = '#FFE9A6';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
+      ctx.shadowColor = 'rgba(0,0,0,.95)';
+      ctx.shadowBlur = 3;
       ctx.fillText(cityCenterLabel ? `CITY CENTER · ${String(cityCenterLabel).toUpperCase()}` : 'CITY CENTER', cx, cy + 13);
+      if (Number.isFinite(Number(destinationBearing))) {
+        ctx.font = compact ? '800 6.5px Inter, sans-serif' : '800 8px Inter, sans-serif';
+        ctx.fillStyle = '#DBEAFE';
+        ctx.fillText('CLICK CENTER TO FIT ROUTE', cx, cy + (compact ? 24 : 28));
+      }
+      ctx.shadowBlur = 0;
     }
 
     if (overlay && Number.isFinite(radiusMeters)) {
@@ -848,7 +901,7 @@ export default function ZodiacWheel({
       ctx.textAlign = 'center';
       ctx.fillText(`MAP RADIUS · ${formatDistance(radiusMeters / 1000, distanceUnit).toUpperCase()}`, cx, H - 13);
     }
-  }, [chart, natalAsc, natalMc, natalPlanets, natalBirthBearing, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit, displayHeading, followingPlanetId, flatMode, travelBearing, cityCentered, cityCenterLabel, userGeoBearing, userGeoDistanceMeters, geoRadiusMeters, geographicHouse]);
+  }, [chart, natalAsc, natalMc, natalPlanets, natalBirthBearing, planets, selectedPlanet, selectedHouse, destinationBearing, compact, overlay, radiusMeters, distanceUnit, displayHeading, followingPlanetId, flatMode, travelBearing, cityCentered, cityCenterLabel, userGeoBearing, userGeoDistanceMeters, geoRadiusMeters, geographicHouse, onCenterRequest]);
 
   const handleClick = e => {
     if (!chart) return;
@@ -861,6 +914,13 @@ export default function ZodiacWheel({
     const dist = Math.hypot(x - cx, y - cy);
     const screen = norm(Math.atan2(y - cy, x - cx) * 180 / Math.PI + 90);
     const lon = norm(screen - (90 - chart.asc - (Number.isFinite(Number(displayHeading)) ? Number(displayHeading) : 0)));
+
+    // With a destination active, the center reticle is a dedicated route-recenter target.
+    // This keeps planet/house hit testing unchanged everywhere else on the wheel.
+    if (Number.isFinite(Number(destinationBearing)) && dist <= 30 && onCenterRequest) {
+      onCenterRequest();
+      return;
+    }
 
     // Planet hit area is intentionally generous for mobile use.
     if (dist < R * .56) {
