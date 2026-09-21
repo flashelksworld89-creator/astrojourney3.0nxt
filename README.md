@@ -1,8 +1,8 @@
-# AstroWalk Journey 3.6.5 — Route Navigation + Street Lock
+# AstroWalk Journey 3.6.6 — Route Navigation + Street Lock
 
 This build keeps the 3.5.2 map/compass/HUD baseline and adds:
 
-## 3.6.5 navigation additions
+## 3.6.6 navigation additions
 
 - Live current date/time widget, separate from the selectable Journey Time.
 - Collapsible Wheel Radius control moved to the left rail above Nakshatra Explorer.
@@ -40,8 +40,12 @@ No new Vercel variables are required. Keep the existing:
 See `ASTROCARTOGRAPHY_METHOD.md` for the research/implementation model and thresholds.
 
 
-## 3.6.5 deployment repair
-- Rebased on the stable 3.6.5 project.
-- Keeps the 3.6.5 context-synthesis interpretation engine.
+## 3.6.6 deployment repair
+- Rebased on the stable 3.6.6 project.
+- Keeps the 3.6.6 context-synthesis interpretation engine.
 - Fixes the routeAnalysis declaration order so it is never referenced before initialization.
 - Keeps route/street/gandanta context in prediction requests.
+
+
+### v3.6.6
+Fullscreen predictions are now organized into separate Planet Prediction and House Prediction narrative sections with paragraph-style explanations and expandable astrological basis.
