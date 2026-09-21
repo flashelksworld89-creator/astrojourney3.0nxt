@@ -15,7 +15,7 @@ import LiveTrackingControls from './LiveTrackingControls';
 import {computeChart,computeNatalChart,calculateHouseLords,buildJourneyReading,bearingBetween,destinationZoneFromBearing,distanceKmBetween,geographicHouseFromBearing,formatDistance,calculateLocalSpaceDirections,localSpaceRouteContacts} from '../lib/astro';
 import { requestPrivateInterpretation } from '../lib/privateInterpretation';
 import { analyzeJourneyRoute } from '../lib/journeyRoute';
-import { loadGoogleMaps } from '../lib/googleMaps';
+import { geocodePlace } from '../lib/googleMaps';
 
 
 
@@ -197,15 +197,12 @@ export default function MissionView({mission,gps,gpsError,onBack}){
     if(!q)return;
     setMapSearchBusy(true);
     try{
-      const maps=await loadGoogleMaps();
-      const geocoder=new maps.Geocoder();
-      const {results}=await geocoder.geocode({address:q});
-      const r=results?.[0];
-      if(!r)throw new Error('Location not found.');
-      const point={lat:r.geometry.location.lat(),lng:r.geometry.location.lng(),label:r.formatted_address||q};
+      const point=await geocodePlace(q);
       setMapSelectedPlace(point);
       setMapFocusLocation({...point,nonce:Date.now()});
-    }catch{}
+    }catch(error){
+      console.warn('Map location lookup returned no result.',error?.message||error);
+    }
     finally{setMapSearchBusy(false)}
   };
   const openSelectedStreet=()=>{

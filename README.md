@@ -115,3 +115,10 @@ Deployment note: Node is pinned to 24.x for current Vercel compatibility.
 - Route directions are calculated independently of planet selection so every planet can be evaluated against the same route.
 - Prediction Center now generates a separate route forecast for each transit planet rather than one blended all-planets forecast.
 - Route field transitions are added to the planetary evidence stream.
+
+
+## 3.7.2 geocoder repair
+- Treats Google ZERO_RESULTS as a normal no-match condition rather than a fatal app error.
+- Latitude/longitude entries bypass Google entirely.
+- Text location searches fall back to a server-side OpenStreetMap/Nominatim lookup.
+- Reverse-geocoding failures preserve coordinates and never interrupt the map.

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { LocateFixed, Footprints, Car, Play, MapPin } from 'lucide-react';
-import { geocodeWithGoogle } from '../lib/googleMaps';
+import { geocodePlace, parseCoordinateQuery } from '../lib/googleMaps';
 
-function parseCoords(text){const m=text.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);if(!m)return null;const lat=Number(m[1]),lng=Number(m[2]);if(Math.abs(lat)>90||Math.abs(lng)>180)return null;return{lat,lng,label:`${lat.toFixed(5)}, ${lng.toFixed(5)}`};}
-async function resolvePlace(text){return parseCoords(text)||geocodeWithGoogle(text);}
+async function resolvePlace(text){return parseCoordinateQuery(text)||geocodePlace(text);}
 function toLocalInput(date){const pad=n=>String(n).padStart(2,'0');return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;}
 const OFFSETS=Array.from({length:53},(_,i)=>{const minutes=-12*60+i*30;const sign=minutes>=0?'+':'-';const a=Math.abs(minutes);return `${sign}${String(Math.floor(a/60)).padStart(2,'0')}:${String(a%60).padStart(2,'0')}`;});
 
