@@ -6,27 +6,37 @@ import MissionView from './components/MissionView';
 import KeywordManager from './components/KeywordManager';
 
 export default function AstroWalkClient() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('admin') === 'keywords') {
-    return <div className="app"><KeywordManager /></div>;
-  }
-
+  const [adminMode, setAdminMode] = useState(false);
   const [screen, setScreen] = useState('setup');
-  const [mission, setMission] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('astrowalk_last_mission') || 'null');
-    } catch {
-      return null;
-    }
-  });
+  const [mission, setMission] = useState(null);
+  const [restored, setRestored] = useState(false);
   const [gps, setGps] = useState(null);
   const [gpsError, setGpsError] = useState('');
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setGpsError('This browser does not support device location.');
-      return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      setAdminMode(params.get('admin') === 'keywords');
+    } catch {
+      setAdminMode(false);
     }
+
+    try {
+      const saved = window.localStorage?.getItem('astrowalk_last_mission');
+      setMission(saved ? JSON.parse(saved) : null);
+    } catch {
+      setMission(null);
+    } finally {
+      setRestored(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGpsError('This browser does not support device location.');
+      return undefined;
+    }
+
     const id = navigator.geolocation.watchPosition(
       pos => {
         const c = pos.coords;
@@ -44,14 +54,28 @@ export default function AstroWalkClient() {
       err => setGpsError(err?.message || 'Location permission is unavailable.'),
       { enableHighAccuracy: true, maximumAge: 1500, timeout: 15000 }
     );
+
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
   const startMission = data => {
-    localStorage.setItem('astrowalk_last_mission', JSON.stringify(data));
+    try {
+      window.localStorage?.setItem('astrowalk_last_mission', JSON.stringify(data));
+    } catch {
+      // Storage can be blocked in private/restricted browser modes. The mission
+      // should still start normally even when persistence is unavailable.
+    }
     setMission(data);
     setScreen('mission');
   };
+
+  if (!restored) {
+    return <main className="app"><section className="card loading-chart">Loading AstroWalk Journey…</section></main>;
+  }
+
+  if (adminMode) {
+    return <div className="app"><KeywordManager /></div>;
+  }
 
   return (
     <div className="app">

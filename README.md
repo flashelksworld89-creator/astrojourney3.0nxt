@@ -122,3 +122,9 @@ Deployment note: Node is pinned to 24.x for current Vercel compatibility.
 - Latitude/longitude entries bypass Google entirely.
 - Text location searches fall back to a server-side OpenStreetMap/Nominatim lookup.
 - Reverse-geocoding failures preserve coordinates and never interrupt the map.
+
+## 3.7.3 runtime startup repair
+- Removes the full-app dynamic import/chunk boundary from `app/page.js`.
+- Moves URL admin-mode detection and saved-mission restoration into `useEffect` after browser mount.
+- Makes localStorage reads/writes non-fatal when browser storage is unavailable.
+- Preserves the 3.7.2 geocoder fallback behavior and 3.7.1 per-planet route forecasts.
