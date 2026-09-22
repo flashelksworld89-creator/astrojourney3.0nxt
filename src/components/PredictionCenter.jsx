@@ -32,7 +32,7 @@ export default function PredictionCenter({data,busy,selectedPlanet,onPlanetSelec
       {busy&&<div className="prediction-center-busy"><Loader2 className="spin" size={14}/> Updating</div>}
     </div>
     {!data?<p className="prediction-center-empty">Planet forecasts will appear after the natal chart, transit chart, and destination are ready.</p>:<>
-      <p className="prediction-center-intro"><b>{data?.forecastLabel||'Daily overview'}:</b> Each planet is interpreted against the natal chart, scenario-priority houses and lords, Moon testimony, Bhavat Bhavam, route fields, destination field, nakshatra modifiers, dispositors, and your controlled terminology.</p>{data?.neighborhoodMoonForecast?.prose&&<div className="success">{data.neighborhoodMoonForecast.prose}</div>}
+      <p className="prediction-center-intro"><b>{data?.forecastLabel||'Daily overview'}:</b> Each planet is interpreted against the natal chart, scenario-priority houses and lords, Moon testimony, Bhavat Bhavam, route fields, destination field, nakshatra modifiers, dispositors, and your controlled terminology.</p>{(['neighbors','home'].includes(data?.forecastMode)&&data?.moonNeighborhoodFactor?.prose)&&<div className="success">{data.moonNeighborhoodFactor.prose}</div>}
       <div className="planet-route-prediction-grid">
         {forecasts.map(item=><PlanetPredictionCard key={item.planetId} item={item} active={selectedPlanet?.id===item.planetId} onSelect={onPlanetSelect}/>)}
       </div>
