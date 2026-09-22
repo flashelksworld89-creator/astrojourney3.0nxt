@@ -42,6 +42,34 @@ function houseContexts(natalChart,houseLords){
   });
 }
 
+export function bhavatBhavamHouse(house){
+  const n=Number(house);
+  if(!Number.isFinite(n)||n<1||n>12)return null;
+  return ((2*n-2)%12)+1;
+}
+
+function buildBhavatBhavamEvidence(chart,contexts,houseEvidence){
+  return contexts.map(primary=>{
+    const derivedHouse=bhavatBhavamHouse(primary.house);
+    const derived=contexts.find(h=>h.house===derivedHouse)||null;
+    const primaryHits=(houseEvidence||[]).filter(x=>Number(x.house)===Number(primary.house)).slice(0,8);
+    const derivedHits=(houseEvidence||[]).filter(x=>Number(x.house)===Number(derivedHouse)).slice(0,8);
+    const sharedTransitIds=[...new Set(primaryHits.map(x=>x.transit?.id).filter(id=>derivedHits.some(y=>y.transit?.id===id)))];
+    const reinforcement=sharedTransitIds.length>0 || (primaryHits.length>0&&derivedHits.length>0);
+    return {
+      primaryHouse:primary.house,
+      primaryTopics:primary.topics||[],
+      derivedHouse,
+      derivedTopics:derived?.topics||[],
+      derivedContext:derived,
+      primaryTransitHits:primaryHits,
+      derivedTransitHits:derivedHits,
+      sharedTransitIds,
+      reinforced:reinforcement
+    };
+  });
+}
+
 function transitToHouseEvidence(chart,contexts){
   const out=[];
   for(const t of chart?.planets||[]){
@@ -128,6 +156,7 @@ export function buildPredictionFormulaEvidence({chart,natalChart,houseLords,curr
     natalHouseContexts:houses,
     transitToNatalHouses:transitHouseEvidence,
     transitToNatalPlanets:transitNatalPlanetEvidence,
+    bhavatBhavam:buildBhavatBhavamEvidence(chart,houses,transitHouseEvidence),
     routeLordChains:lordChains,
     currentLocation:{field:currentField,aspects:fieldAspects(chart,currentField)},
     destination:{field:destinationField,aspects:fieldAspects(chart,destinationField)},
