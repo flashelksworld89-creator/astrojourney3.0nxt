@@ -259,7 +259,9 @@ function makeCandidate({body,vocab,planet,house,aspect,kind='house',context=null
   const bbBonus=bb?.reinforced?.18:0;
   const profile=forecastProfile(body);
   const scenarioBonus=profile.houses.includes(Number(house))?profile.bonus:-.12;
-  const score=scoreAspect(aspect,(PRIORITY_WEIGHT[house]||0)+priorityExtra+bbBonus+scenarioBonus)+(kind==='destination'?.35:kind==='moon'?.3:0);
+  const moonField=moonNeighborhoodFactor(body);
+  const moonFieldBonus=moonField?.available?(body.forecastMode==='neighbors'||body.forecastMode==='home'?moonField.scoreBonus:Math.min(.12,moonField.scoreBonus*.45)):0;
+  const score=scoreAspect(aspect,(PRIORITY_WEIGHT[house]||0)+priorityExtra+bbBonus+scenarioBonus+moonFieldBonus)+(kind==='destination'?.35:kind==='moon'?.3:0);
   const seed=`${planet.id}|${house}|${asp(aspect).type}|${nak}|${kind}`;
   const actor=choose(terminology.people.filter(x=>!model.actors.includes(x)),seed+'|actor')||choose(model.actors,seed+'|actor');
   const object=choose(terminology.objects.filter(x=>!model.objects.includes(x)),seed+'|object')||choose(model.objects,seed+'|object');
@@ -405,40 +407,77 @@ function planetRoutePredictions(body,vocab,candidates){
 }
 
 
-function neighborhoodMoonForecast(body){
-  if(body?.forecastMode!=='neighbors')return null;
+function moonNeighborhoodFactor(body){
   const field=body?.currentZone||body?.formulaEvidence?.currentLocation?.field||null;
-  if(!field)return {available:false,prose:'Neighborhood forecast is waiting for the current geographic zodiac and nakshatra field.'};
-  const sign=field.sign||null;
+  const natalMoon=(body.natalPlanets||[]).find(p=>p.id==='moon')||body.formulaEvidence?.moon?.natalMoon||null;
+  const transitMoon=(body.planets||[]).find(p=>p.id==='moon')||body.formulaEvidence?.moon?.transitMoon||null;
+  if(!field||!natalMoon||!transitMoon){
+    return {available:false,scoreBonus:0,prose:'Moon-neighborhood factor is waiting for natal Moon, transiting Moon, and current neighborhood field data.'};
+  }
+
   const nakshatra=field.nakshatra?.name||field.nakshatra||null;
-  const signLord=SIGN_LORDS[sign]||null;
   const nakshatraLord=NAKSHATRA_LORDS[nakshatra]||null;
-  const moonHits=(body.transitNatalAspects||[]).filter(x=>x.natalId==='moon'||x.natal?.id==='moon');
-  const signLordHit=moonHits.find(x=>(x.transitId||x.transit?.id)===signLord)||null;
-  const nakshatraLordHit=moonHits.find(x=>(x.transitId||x.transit?.id)===nakshatraLord)||null;
-  const describe=(lord,hit,label)=>{
-    if(!lord)return '';
-    const name=cap(lord);
-    if(!hit)return `${name}, ruler of the neighborhood ${label}, has no close major aspect to the natal Moon right now.`;
-    const type=hit.type||hit.aspect?.type||'contact';
-    const orb=Number(hit.orb??hit.aspect?.orb);
-    return `${name}, ruler of the neighborhood ${label}, forms a ${String(type).toLowerCase()} to the natal Moon${Number.isFinite(orb)?` within ${orb.toFixed(2)}°`:''}.`;
-  };
+  const lordTransit=(body.planets||[]).find(p=>p.id===nakshatraLord)||null;
+
+  const moonToNatal=(body.formulaEvidence?.moon?.moonToNatalMoon)||null;
+  const moonToLord=(body.transitNatalAspects||[]).find(x=>{
+    const tid=x.transitId||x.transit?.id;
+    const nid=x.natalId||x.natal?.id;
+    return (tid==='moon'&&nid===nakshatraLord)||(tid===nakshatraLord&&nid==='moon');
+  })||null;
+
+  const lordToNatalMoon=(body.transitNatalAspects||[]).find(x=>{
+    const tid=x.transitId||x.transit?.id;
+    const nid=x.natalId||x.natal?.id;
+    return tid===nakshatraLord&&nid==='moon';
+  })||null;
+
+  const phaseWeight={Conjunction:.28,Opposition:.22,Square:.18,Trine:.16,Sextile:.12,Quincunx:.10};
+  const mType=moonToNatal?.type||moonToNatal?.aspect?.type||'';
+  const lType=lordToNatalMoon?.type||lordToNatalMoon?.aspect?.type||moonToLord?.type||moonToLord?.aspect?.type||'';
+  const scoreBonus=.08+(phaseWeight[mType]||0)+(phaseWeight[lType]||0);
+
   const pieces=[
-    `The current neighborhood field is ${sign||'unknown sign'} / ${nakshatra||'unknown nakshatra'}.`,
-    describe(signLord,signLordHit,'zodiac sign'),
-    nakshatraLord===signLord?'The sign ruler and nakshatra ruler are the same planet for this field.':describe(nakshatraLord,nakshatraLordHit,'nakshatra')
-  ].filter(Boolean);
-  return {available:true,sign,nakshatra,signLord,nakshatraLord,signLordHit,nakshatraLordHit,prose:pieces.join(' ')};
+    `Natal Moon is in ${natalMoon.sign||'unknown sign'}${natalMoon.nakshatra?` / ${natalMoon.nakshatra}`:''}.`,
+    `Transiting Moon is in ${transitMoon.sign||'unknown sign'}${transitMoon.nakshatra?` / ${transitMoon.nakshatra}`:''}.`,
+    `The current neighborhood nakshatra is ${nakshatra||'unknown'}.`,
+    nakshatraLord?`${cap(nakshatraLord)} rules this neighborhood nakshatra and is currently in ${lordTransit?.sign||'an unknown sign'} House ${lordTransit?.house||'—'}${lordTransit?.nakshatra?` / ${lordTransit.nakshatra}`:''}.`:'The current neighborhood nakshatra lord could not be resolved.'
+  ];
+
+  if(moonToNatal){
+    const type=moonToNatal.type||moonToNatal.aspect?.type;
+    const orb=Number(moonToNatal.orb??moonToNatal.aspect?.orb);
+    pieces.push(`The transiting Moon forms a ${String(type||'contact').toLowerCase()} to the natal Moon${Number.isFinite(orb)?` within ${orb.toFixed(2)}°`:''}.`);
+  }
+  if(lordToNatalMoon||moonToLord){
+    const hit=lordToNatalMoon||moonToLord;
+    const type=hit.type||hit.aspect?.type;
+    const orb=Number(hit.orb??hit.aspect?.orb);
+    pieces.push(`The neighborhood nakshatra lord forms a ${String(type||'contact').toLowerCase()} with the natal Moon${Number.isFinite(orb)?` within ${orb.toFixed(2)}°`:''}.`);
+  }
+
+  return {
+    available:true,
+    nakshatra,
+    nakshatraLord,
+    lordTransit,
+    natalMoon,
+    transitMoon,
+    moonToNatal,
+    lordToNatalMoon:lordToNatalMoon||moonToLord||null,
+    scoreBonus,
+    prose:pieces.join(' ')
+  };
 }
+
 
 export function buildEventDrivenPrediction(body,vocab){
   const candidates=collectCandidates(body,vocab);const groups=clusterCandidates(candidates);
   return {
     forecastMode:body.forecastMode||'daily',
     forecastLabel:forecastProfile(body).label,
-    neighborhoodMoonForecast:neighborhoodMoonForecast(body),
-    overallProse:neighborhoodMoonForecast(body)?.prose||overallProse(groups),
+    moonNeighborhoodFactor:moonNeighborhoodFactor(body),
+    overallProse:overallProse(groups),
     planetPredictions:planetRoutePredictions(body,vocab,candidates),
     sections:{
       mindsetActions:moonMindsetProse(body,groups),
