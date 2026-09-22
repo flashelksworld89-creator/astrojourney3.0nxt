@@ -105,7 +105,7 @@ export async function POST(request){
       destinationZone:body.destinationZone||{},
       transitNatalAspects:body.transitNatalAspects||[],
       natalUsage:natalUsage(body),
-      modelVersion:'astrowalk-3.7.9-forecast-scenarios'
+      modelVersion:'astrowalk-3.8.0-moon-neighborhood-factor'
     });
   }catch(error){
     console.error('Event-driven interpretation failed',error);
