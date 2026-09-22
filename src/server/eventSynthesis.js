@@ -5,6 +5,32 @@ const SIGN_LORDS = {
   Libra:'venus', Scorpio:'mars', Sagittarius:'jupiter', Capricorn:'saturn', Aquarius:'saturn', Pisces:'jupiter'
 };
 
+const NAKSHATRA_LORDS={
+  Ashwini:'ketu', Bharani:'venus', Krittika:'sun', Rohini:'moon', Mrigashira:'mars', Ardra:'rahu',
+  Punarvasu:'jupiter', Pushya:'saturn', Ashlesha:'mercury', Magha:'ketu', 'Purva Phalguni':'venus',
+  'Uttara Phalguni':'sun', Hasta:'moon', Chitra:'mars', Swati:'rahu', Vishakha:'jupiter',
+  Anuradha:'saturn', Jyeshtha:'mercury', Mula:'ketu', 'Purva Ashadha':'venus',
+  'Uttara Ashadha':'sun', Shravana:'moon', Dhanishta:'mars', Shatabhisha:'rahu',
+  'Purva Bhadrapada':'jupiter', 'Uttara Bhadrapada':'saturn', Revati:'mercury'
+};
+
+const FORECAST_MODES={
+  daily:{label:'Daily overview',houses:[1,2,3,4,5,6,7,8,9,10,11,12],bonus:.08},
+  personal:{label:'Personal forecast',houses:[1,5,9],bonus:.48},
+  short_travel:{label:'Short-distance travel',houses:[3,6,7],bonus:.58},
+  long_travel:{label:'Long-distance travel',houses:[9,12,3],bonus:.58},
+  home:{label:'Home environment',houses:[4,2,7],bonus:.58},
+  work:{label:'Work environment',houses:[6,10,11],bonus:.58},
+  recreation:{label:'Recreational activity',houses:[5,3,11],bonus:.58},
+  earning:{label:'Earning ability',houses:[2,10,11],bonus:.62},
+  neighbors:{label:'Neighborhood / neighbors',houses:[3,4,11],bonus:.65}
+};
+
+function forecastProfile(body){
+  return FORECAST_MODES[body?.forecastMode]||FORECAST_MODES.daily;
+}
+
+
 const HOUSE_EVENT_MODEL = {
   1:{domain:'self', actors:['someone reacting directly to you','a person whose response changes your next decision'], actions:['forces a personal decision','puts you in the position of initiating or refusing something','requires you to respond immediately'], objects:['your schedule','your appearance or presentation','a personal choice'], places:['the immediate surroundings']},
   2:{domain:'money and speech', actors:['a cashier, family member, financial contact, or person discussing money'], actions:['raises a payment, price, possession, or family-resource matter','requires careful wording or a financial decision'], objects:['money','a purchase','a bill','a possession','a conversation'], places:['a shop, counter, bank, or family setting']},
@@ -231,7 +257,9 @@ function makeCandidate({body,vocab,planet,house,aspect,kind='house',context=null
   const disp=dispositorState(body,planet);
   const bb=(body.formulaEvidence?.bhavatBhavam||[]).find(x=>Number(x.primaryHouse)===Number(house));
   const bbBonus=bb?.reinforced?.18:0;
-  const score=scoreAspect(aspect,(PRIORITY_WEIGHT[house]||0)+priorityExtra+bbBonus)+(kind==='destination'?.35:kind==='moon'?.3:0);
+  const profile=forecastProfile(body);
+  const scenarioBonus=profile.houses.includes(Number(house))?profile.bonus:-.12;
+  const score=scoreAspect(aspect,(PRIORITY_WEIGHT[house]||0)+priorityExtra+bbBonus+scenarioBonus)+(kind==='destination'?.35:kind==='moon'?.3:0);
   const seed=`${planet.id}|${house}|${asp(aspect).type}|${nak}|${kind}`;
   const actor=choose(terminology.people.filter(x=>!model.actors.includes(x)),seed+'|actor')||choose(model.actors,seed+'|actor');
   const object=choose(terminology.objects.filter(x=>!model.objects.includes(x)),seed+'|object')||choose(model.objects,seed+'|object');
@@ -376,10 +404,41 @@ function planetRoutePredictions(body,vocab,candidates){
   });
 }
 
+
+function neighborhoodMoonForecast(body){
+  if(body?.forecastMode!=='neighbors')return null;
+  const field=body?.currentZone||body?.formulaEvidence?.currentLocation?.field||null;
+  if(!field)return {available:false,prose:'Neighborhood forecast is waiting for the current geographic zodiac and nakshatra field.'};
+  const sign=field.sign||null;
+  const nakshatra=field.nakshatra?.name||field.nakshatra||null;
+  const signLord=SIGN_LORDS[sign]||null;
+  const nakshatraLord=NAKSHATRA_LORDS[nakshatra]||null;
+  const moonHits=(body.transitNatalAspects||[]).filter(x=>x.natalId==='moon'||x.natal?.id==='moon');
+  const signLordHit=moonHits.find(x=>(x.transitId||x.transit?.id)===signLord)||null;
+  const nakshatraLordHit=moonHits.find(x=>(x.transitId||x.transit?.id)===nakshatraLord)||null;
+  const describe=(lord,hit,label)=>{
+    if(!lord)return '';
+    const name=cap(lord);
+    if(!hit)return `${name}, ruler of the neighborhood ${label}, has no close major aspect to the natal Moon right now.`;
+    const type=hit.type||hit.aspect?.type||'contact';
+    const orb=Number(hit.orb??hit.aspect?.orb);
+    return `${name}, ruler of the neighborhood ${label}, forms a ${String(type).toLowerCase()} to the natal Moon${Number.isFinite(orb)?` within ${orb.toFixed(2)}°`:''}.`;
+  };
+  const pieces=[
+    `The current neighborhood field is ${sign||'unknown sign'} / ${nakshatra||'unknown nakshatra'}.`,
+    describe(signLord,signLordHit,'zodiac sign'),
+    nakshatraLord===signLord?'The sign ruler and nakshatra ruler are the same planet for this field.':describe(nakshatraLord,nakshatraLordHit,'nakshatra')
+  ].filter(Boolean);
+  return {available:true,sign,nakshatra,signLord,nakshatraLord,signLordHit,nakshatraLordHit,prose:pieces.join(' ')};
+}
+
 export function buildEventDrivenPrediction(body,vocab){
   const candidates=collectCandidates(body,vocab);const groups=clusterCandidates(candidates);
   return {
-    overallProse:overallProse(groups),
+    forecastMode:body.forecastMode||'daily',
+    forecastLabel:forecastProfile(body).label,
+    neighborhoodMoonForecast:neighborhoodMoonForecast(body),
+    overallProse:neighborhoodMoonForecast(body)?.prose||overallProse(groups),
     planetPredictions:planetRoutePredictions(body,vocab,candidates),
     sections:{
       mindsetActions:moonMindsetProse(body,groups),
