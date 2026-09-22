@@ -46,8 +46,139 @@ const BENEFIC = new Set(['jupiter','venus']);
 const CHALLENGING = new Set(['mars','saturn','rahu','ketu']);
 const uniq=a=>[...new Set((a||[]).filter(Boolean))];
 const cap=s=>{const v=String(s||'').trim();return v?v[0].toUpperCase()+v.slice(1):''};
-function normalizeEntries(v){return Array.isArray(v)?v.map(x=>typeof x==='string'?{term:x,weight:.65}:x).filter(x=>x&&x.term):[]}
+function normalizeEntries(v){return Array.isArray(v)?v.map(x=>typeof x==='string'?{term:x,weight:.65,requires:'general_context'}:x).filter(x=>x&&x.term):[]}
 function highest(entries,n=3){return normalizeEntries(entries).sort((a,b)=>(Number(b.weight)||0)-(Number(a.weight)||0)).slice(0,n).map(x=>x.term)}
+
+const CATEGORY_SLOT={
+  person:'people',people:'people',person_symbol:'people',
+  place:'places',places:'places',location:'places',environment:'places',object_place:'places',event_place:'places',
+  event:'events',events:'events',action:'events',obstacle:'events',event_theme:'events',object_event:'events',travel_action:'events',information_action:'events',action_information:'events',action_state:'events',sensory_action:'events',
+  object:'objects',objects:'objects',body:'objects',body_sensory:'objects',body_motor:'objects',body_symbol:'objects',biology:'objects',substance:'objects',technology:'objects',object_action:'objects',object_nature:'objects',object_travel:'objects',object_system:'objects',people_or_object:'objects',object_or_quality:'objects',
+  quality:'qualities',qualities:'qualities',theme:'qualities',mental:'qualities',sensory:'qualities',spatial:'qualities',cycle:'qualities',scale:'qualities',direction:'qualities',goal:'qualities',vedic_role:'qualities',vedic_timing:'qualities',astrology_context:'qualities',lunar_phase:'qualities',aspect:'qualities',sign:'qualities',nakshatra:'qualities',planet_link:'qualities',house_link:'qualities',brain_region:'qualities',motor:'qualities',sensory_quality:'qualities'
+};
+
+function allBankEntries(bank,slot){
+  const out=[];
+  for(const [category,list] of Object.entries(bank||{})){
+    const mapped=CATEGORY_SLOT[String(category).toLowerCase()]||'qualities';
+    if(mapped!==slot)continue;
+    for(const item of normalizeEntries(list))out.push({...item,category:String(category).toLowerCase()});
+  }
+  return out;
+}
+
+function normalizedText(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'');}
+function hasPlanetContact(planet,target){
+  const t=normalizedText(target);
+  if(!t)return false;
+  if(normalizedText(planet?.id)===t||normalizedText(planet?.name)===t)return true;
+  return JSON.stringify(planet?.aspects||[]).toLowerCase().includes(t);
+}
+function lunarPhaseMatches(body,target){
+  const sun=(body.planets||[]).find(p=>p.id==='sun');
+  const moon=(body.planets||[]).find(p=>p.id==='moon');
+  if(!sun||!moon)return false;
+  const a=Number(sun.siderealLon),b=Number(moon.siderealLon);
+  if(!Number.isFinite(a)||!Number.isFinite(b))return false;
+  let d=Math.abs(a-b)%360;if(d>180)d=360-d;
+  const t=normalizedText(target);
+  if(t==='newmoon')return d<=12;
+  if(t==='fullmoon')return Math.abs(d-180)<=12;
+  return false;
+}
+
+function atomMatches(atom,{body,planet,house,aspect,context,kind}){
+  const raw=String(atom||'').trim();
+  const a=raw.toLowerCase();
+  if(!a||a==='general_context')return true;
+
+  const eq=raw.match(/^([^=]+)=(.+)$/);
+  if(eq){
+    const key=normalizedText(eq[1]),value=eq[2].trim();
+    if(key==='nakshatra')return normalizedText(context?.nakshatra||planet?.nakshatra)===normalizedText(value);
+    if(key==='sign')return normalizedText(context?.sign||planet?.sign)===normalizedText(value);
+    if(key==='house')return Number(house)===Number(value);
+    if(key==='aspect')return normalizedText(asp(aspect).type)===normalizedText(value);
+    if(key==='planet')return hasPlanetContact(planet,value);
+    if(key==='direction')return normalizedText(body.direction)===normalizedText(value);
+    if(key==='location'){
+      const hay=JSON.stringify([body.originLabel,body.destinationLabel,body.currentZone,body.destinationZone]).toLowerCase();
+      return hay.includes(String(value).toLowerCase());
+    }
+    if(key==='lunarphase'||key==='lunar_phase')return lunarPhaseMatches(body,value);
+    return false;
+  }
+
+  if(a==='visual')return ['sun','mercury','moon'].includes(planet?.id)||[3,5,10].includes(Number(house));
+  if(a==='auditory')return ['moon','mercury','jupiter'].includes(planet?.id)||[2,3,9].includes(Number(house))||normalizedText(context?.nakshatra)==='shravana';
+  if(a==='motor')return ['mars','mercury'].includes(planet?.id)||[1,3,6].includes(Number(house));
+  if(a==='route_context'||a==='route'||a==='vehicle'||a==='navigation'||a==='movement')return ['route-field','destination','route-placement'].includes(kind)||[3,9].includes(Number(house));
+  if(a==='information'||a==='communication'||a==='document'||a==='computation')return planet?.id==='mercury'||[2,3,9,10].includes(Number(house));
+  if(a==='environment'||a==='place'||a==='location'||a==='geographic')return ['route-field','destination','route-placement'].includes(kind);
+  if(a==='person_context'||a==='person'||a==='partner'||a==='relationship'||a==='business')return [1,5,7,11].includes(Number(house));
+  if(a==='body_context'||a==='body'||a==='health')return [1,6,8,12].includes(Number(house))||['moon','mars'].includes(planet?.id);
+  if(a==='object_context'||a==='object')return true;
+  if(a==='time_context'||a==='timing'||a==='cycle')return true;
+  if(a==='decision_context'||a==='decision')return [1,7,9,10].includes(Number(house));
+  if(a==='house3')return Number(house)===3;
+  if(a==='house5')return Number(house)===5;
+  if(a==='house6')return Number(house)===6;
+  if(a==='house7')return Number(house)===7;
+  if(a==='house8')return Number(house)===8;
+  if(a==='house9')return Number(house)===9;
+  if(a==='house10')return Number(house)===10;
+  if(a==='house11')return Number(house)===11;
+  if(a==='house12')return Number(house)===12;
+  if(a==='mercury')return planet?.id==='mercury'||hasPlanetContact(planet,'mercury');
+  if(a==='venus')return planet?.id==='venus'||hasPlanetContact(planet,'venus');
+  if(a==='moon')return planet?.id==='moon'||hasPlanetContact(planet,'moon');
+  if(a==='mars')return planet?.id==='mars'||hasPlanetContact(planet,'mars');
+  if(a==='saturn')return planet?.id==='saturn'||hasPlanetContact(planet,'saturn');
+  if(a==='rahu'||a==='node_context')return planet?.id==='rahu'||hasPlanetContact(planet,'rahu')||hasPlanetContact(planet,'ketu');
+  if(a==='speech'||a==='throat'||a==='taste')return [2,3].includes(Number(house))||['mercury','venus'].includes(planet?.id);
+  if(a==='rest'||a==='sleep'||a==='pause'||a==='solitude')return [4,12].includes(Number(house))||planet?.id==='moon';
+  if(a==='financial')return [2,8,11].includes(Number(house));
+  if(a==='legal'||a==='spiritual'||a==='purpose'||a==='dharma')return [9,10].includes(Number(house))||planet?.id==='jupiter';
+  if(a==='service'||a==='work')return [6,10].includes(Number(house));
+  if(a==='home')return Number(house)===4;
+  if(a==='child'||a==='creative'||a==='performance')return Number(house)===5;
+  if(a==='hidden'||a==='intuition')return [8,12].includes(Number(house));
+  if(a==='technology'||a==='device'||a==='digital'||a==='online'||a==='wireless')return ['mercury','rahu','uranus'].includes(planet?.id)||Number(house)===3;
+  if(a==='weather'||a==='season'||a==='water'||a==='air'||a==='nature')return ['route-field','destination','route-placement'].includes(kind);
+  if(a==='repair'||a==='correction'||a==='mechanical')return ['mars','mercury','saturn'].includes(planet?.id)||Number(house)===6;
+  if(a==='unexpected')return ['rahu','uranus'].includes(planet?.id);
+  if(a==='growth')return ['jupiter','venus'].includes(planet?.id)||[5,11].includes(Number(house));
+  if(a==='direction'||a==='orientation'||a==='spatial'||a==='geometry')return ['route-field','destination','route-placement'].includes(kind)||[3,9].includes(Number(house));
+  if(a==='food'||a==='drink')return [2,4,6].includes(Number(house))||['moon','venus'].includes(planet?.id);
+  if(a==='brain'||a==='cognitive'||a==='mental'||a==='recognition'||a==='neural'||a==='nervoussystem'||a==='executive'||a==='planning'||a==='reflex')return [1,3,5,6].includes(Number(house))||['moon','mercury','jupiter'].includes(planet?.id);
+  if(a==='vascular'||a==='respiratory'||a==='face'||a==='skin'||a==='spine'||a==='muscle'||a==='hand')return [1,6,8].includes(Number(house));
+  if(a==='quantity'||a==='scale'||a==='measurement'||a==='material'||a==='shape')return true;
+  if(a==='arrival'||a==='event'||a==='access'||a==='action'||a==='physicalaction'||a==='release'||a==='pressure'||a==='inactive'||a==='delay'||a==='highactivation'||a==='possibility'||a==='positiveoutcome'||a==='integration'||a==='combination'||a==='creation'||a==='construction'||a==='break'||a==='split'||a==='cold'||a==='avoidance'||a==='flow'||a==='result'||a==='two_sided'||a==='choice'||a==='union'||a==='connection'||a==='group'||a==='frequency'||a==='resource'||a==='underground'||a==='protection'||a==='concealment'||a==='surface'||a==='damage'||a==='temperature'||a==='solar'||a==='media'||a==='vitality')return true;
+  if(a==='atmakaraka_context'||a==='dasha'||a==='bhukti'||a==='dasha_or_bhukti_context'||a==='tropical_reference')return false;
+  if(a==='benefic_context')return BENEFIC.has(planet?.id);
+  if(a==='aspect_context'||a==='aspected')return Boolean(asp(aspect).type&&asp(aspect).type!=='Placement');
+  if(a==='lunar_context'||a==='moon_context')return planet?.id==='moon';
+  if(a==='air_travel')return Number(house)===9;
+  return false;
+}
+
+function ruleMatches(rule,ctx){
+  const r=String(rule||'general_context').trim();
+  if(!r)return true;
+  if(r.includes('|'))return r.split('|').some(x=>ruleMatches(x,ctx));
+  const parts=r.split('_or_').filter(Boolean);
+  if(parts.length>1)return parts.some(x=>atomMatches(x,ctx));
+  return atomMatches(r,ctx);
+}
+
+function eligibleTerms(bank,slot,ctx,n=4){
+  return allBankEntries(bank,slot)
+    .filter(entry=>ruleMatches(entry.requires,ctx))
+    .sort((a,b)=>(Number(b.weight)||0)-(Number(a.weight)||0))
+    .slice(0,n)
+    .map(x=>x.term);
+}
+
 function hash(s){let h=2166136261;for(let i=0;i<String(s).length;i++){h^=String(s).charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function choose(arr,seed){const a=uniq(arr);return a.length?a[hash(seed)%a.length]:''}
 function phase(a){return a?.phase||a?.aspect?.phase||''}
@@ -62,32 +193,33 @@ function dispositorState(body,planet){
   return {lordId,ruler,selfRuled:planet.id===lordId};
 }
 
-function terminologyFor(vocab,planetId,house){
+function terminologyFor(vocab,planetId,house,ctx){
   const bank=vocab?.[planetId]||{};
   const model=HOUSE_EVENT_MODEL[house]||HOUSE_EVENT_MODEL[1];
   return {
-    people:uniq([...highest(bank.people,3),...model.actors]).slice(0,6),
-    events:uniq([...highest(bank.events,3),...model.actions]).slice(0,6),
-    places:uniq([...highest(bank.places,2),...model.places]).slice(0,4),
-    objects:uniq([...highest(bank.objects,3),...model.objects]).slice(0,6),
-    qualities:highest(bank.qualities,3)
+    people:uniq([...eligibleTerms(bank,'people',ctx,3),...model.actors]).slice(0,6),
+    events:uniq([...eligibleTerms(bank,'events',ctx,4),...model.actions]).slice(0,7),
+    places:uniq([...eligibleTerms(bank,'places',ctx,3),...model.places]).slice(0,5),
+    objects:uniq([...eligibleTerms(bank,'objects',ctx,4),...model.objects]).slice(0,7),
+    qualities:eligibleTerms(bank,'qualities',ctx,4)
   };
 }
 
 function makeCandidate({body,vocab,planet,house,aspect,kind='house',context=null,priorityExtra=0,label=''}){
   if(!planet||!house)return null;
   const model=HOUSE_EVENT_MODEL[house]||HOUSE_EVENT_MODEL[1];
-  const terminology=terminologyFor(vocab,planet.id,house);
+  const ruleContext={body,planet,house,aspect,context,kind};
+  const terminology=terminologyFor(vocab,planet.id,house,ruleContext);
   const pfunc=PLANET_FUNCTION[planet.id]||{verbs:['affects'],conditions:[]};
   const nak=context?.nakshatra||planet.nakshatra;
   const nakMods=NAKSHATRA_MODIFIERS[nak]||[];
   const disp=dispositorState(body,planet);
   const score=scoreAspect(aspect,(PRIORITY_WEIGHT[house]||0)+priorityExtra)+(kind==='destination'?.35:kind==='moon'?.3:0);
   const seed=`${planet.id}|${house}|${asp(aspect).type}|${nak}|${kind}`;
-  const actor=choose(highest(vocab?.[planet.id]?.people,3),seed+'|actor')||choose(model.actors,seed+'|actor');
-  const object=choose(highest(vocab?.[planet.id]?.objects,3),seed+'|object')||choose(model.objects,seed+'|object');
-  const place=choose(highest(vocab?.[planet.id]?.places,2),seed+'|place')||choose(model.places,seed+'|place');
-  const terminologyEvent=choose(highest(vocab?.[planet.id]?.events,4),seed+'|tevent');
+  const actor=choose(terminology.people.filter(x=>!model.actors.includes(x)),seed+'|actor')||choose(model.actors,seed+'|actor');
+  const object=choose(terminology.objects.filter(x=>!model.objects.includes(x)),seed+'|object')||choose(model.objects,seed+'|object');
+  const place=choose(terminology.places.filter(x=>!model.places.includes(x)),seed+'|place')||choose(model.places,seed+'|place');
+  const terminologyEvent=choose(terminology.events.filter(x=>!model.actions.includes(x)),seed+'|tevent');
   const action=choose(model.actions,seed+'|action');
   const modifier=choose(nakMods,seed+'|nak');
   const condition=choose(pfunc.conditions,seed+'|condition');
@@ -240,7 +372,7 @@ export function buildEventDrivenPrediction(body,vocab){
     manifestations:manifestations(groups),
     basis:basisLines(body,candidates),
     neuroProseModel:NEURO_PROSE_MODEL,
-    terminologyRule:'Private terminology is used only after the Vedic evidence establishes an event category. It supplies concrete people, objects, places and event forms; it does not create the astrological conclusion.',
+    terminologyRule:'Private terminology is considered only after the Vedic evidence establishes an event category, and each private term must also pass its Requires activation rule before it can enter the forecast.',
     candidates:candidates.slice(0,12).map(c=>({category:c.category,planet:c.planetName,house:c.house,score:Number(c.score.toFixed(2)),actor:c.actor,action:c.action,object:c.object,place:c.place,modifier:c.modifier,terminologyEvent:c.terminologyEvent,experience:experienceSummary(c)}))
   };
 }
