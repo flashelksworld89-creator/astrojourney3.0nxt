@@ -10,6 +10,7 @@ import TransitTimeControlPanel from './TransitTimeControlPanel';
 import NatalFocusPanel from './NatalFocusPanel';
 import JourneyDirectionsPanel from './JourneyDirectionsPanel';
 import PredictionCenter from './PredictionCenter';
+import ForecastModeSelector from './ForecastModeSelector';
 import MapScaleControls from './MapScaleControls';
 import LiveTrackingControls from './LiveTrackingControls';
 import {computeChart,computeNatalChart,calculateHouseLords,buildJourneyReading,bearingBetween,destinationZoneFromBearing,distanceKmBetween,geographicHouseFromBearing,formatDistance,calculateLocalSpaceDirections,localSpaceRouteContacts} from '../lib/astro';
@@ -29,7 +30,7 @@ const TRACKING = {
 
 export default function MissionView({mission,gps,gpsError,onBack}){
   const initialMode=mission.trackingMode||((mission.originSource==='gps')?(mission.travelMode||'walk'):'static');
-  const [view,setView]=useState('map'),[mapFullscreen,setMapFullscreen]=useState(false),[fullscreenSettling,setFullscreenSettling]=useState(false),[fullscreenPredictionOpen,setFullscreenPredictionOpen]=useState(false),[date,setDate]=useState(new Date(mission.date)),[live,setLive]=useState(()=>Math.abs(new Date(mission.date).getTime()-Date.now())<5*60*1000),[trackingMode,setTrackingMode]=useState(initialMode),[liveLocation,setLiveLocation]=useState(initialMode==='static'?mission.location:(gps||mission.location)),[analysisLocation,setAnalysisLocation]=useState(mission.location),[chart,setChart]=useState(null),[natalChart,setNatalChart]=useState(null),[selected,setSelected]=useState(null),[selectedHouse,setSelectedHouse]=useState(null),[loadingChart,setLoadingChart]=useState(true),[privateReading,setPrivateReading]=useState(null),[privateReadingBusy,setPrivateReadingBusy]=useState(false),[wheelRadiusMeters,setWheelRadiusMeters]=useState(804.672),[distanceUnit,setDistanceUnit]=useState(initialMode==='drive'?'mi':'ft'),[movedMeters,setMovedMeters]=useState(0),[lastAnalysisAt,setLastAnalysisAt]=useState(Date.now()),[chartError,setChartError]=useState(''),[natalStatus,setNatalStatus]=useState('calculating'),[natalError,setNatalError]=useState(''),[streetViewActive,setStreetViewActive]=useState(false),[streetPov,setStreetPov]=useState({heading:0,pitch:0,zoom:0}),[streetRoadBearing,setStreetRoadBearing]=useState(null),[streetCompassMode,setStreetCompassMode]=useState('upright'),[followingPlanetId,setFollowingPlanetId]=useState(null),[cityCenter,setCityCenter]=useState(null),[cityWheelDiameterPx,setCityWheelDiameterPx]=useState(null),[journeyDestination,setJourneyDestination]=useState(mission.destination),[mapSelectedPlace,setMapSelectedPlace]=useState(null),[mapSearchText,setMapSearchText]=useState(''),[mapSearchBusy,setMapSearchBusy]=useState(false),[mapFocusLocation,setMapFocusLocation]=useState(null),[mapStreetLocation,setMapStreetLocation]=useState(null),[highlightRoad,setHighlightRoad]=useState(null),[focusHouses,setFocusHouses]=useState([1,3,7,9]),[focusLords,setFocusLords]=useState([1,3,7,9]),[routeData,setRouteData]=useState(null),[centerRouteRequest,setCenterRouteRequest]=useState(0);
+  const [view,setView]=useState('map'),[mapFullscreen,setMapFullscreen]=useState(false),[fullscreenSettling,setFullscreenSettling]=useState(false),[fullscreenPredictionOpen,setFullscreenPredictionOpen]=useState(false),[date,setDate]=useState(new Date(mission.date)),[live,setLive]=useState(()=>Math.abs(new Date(mission.date).getTime()-Date.now())<5*60*1000),[trackingMode,setTrackingMode]=useState(initialMode),[liveLocation,setLiveLocation]=useState(initialMode==='static'?mission.location:(gps||mission.location)),[analysisLocation,setAnalysisLocation]=useState(mission.location),[chart,setChart]=useState(null),[natalChart,setNatalChart]=useState(null),[selected,setSelected]=useState(null),[selectedHouse,setSelectedHouse]=useState(null),[loadingChart,setLoadingChart]=useState(true),[privateReading,setPrivateReading]=useState(null),[privateReadingBusy,setPrivateReadingBusy]=useState(false),[wheelRadiusMeters,setWheelRadiusMeters]=useState(804.672),[distanceUnit,setDistanceUnit]=useState(initialMode==='drive'?'mi':'ft'),[movedMeters,setMovedMeters]=useState(0),[lastAnalysisAt,setLastAnalysisAt]=useState(Date.now()),[chartError,setChartError]=useState(''),[natalStatus,setNatalStatus]=useState('calculating'),[natalError,setNatalError]=useState(''),[streetViewActive,setStreetViewActive]=useState(false),[streetPov,setStreetPov]=useState({heading:0,pitch:0,zoom:0}),[streetRoadBearing,setStreetRoadBearing]=useState(null),[streetCompassMode,setStreetCompassMode]=useState('upright'),[followingPlanetId,setFollowingPlanetId]=useState(null),[cityCenter,setCityCenter]=useState(null),[cityWheelDiameterPx,setCityWheelDiameterPx]=useState(null),[journeyDestination,setJourneyDestination]=useState(mission.destination),[mapSelectedPlace,setMapSelectedPlace]=useState(null),[mapSearchText,setMapSearchText]=useState(''),[mapSearchBusy,setMapSearchBusy]=useState(false),[mapFocusLocation,setMapFocusLocation]=useState(null),[mapStreetLocation,setMapStreetLocation]=useState(null),[highlightRoad,setHighlightRoad]=useState(null),[focusHouses,setFocusHouses]=useState([1,3,7,9]),[focusLords,setFocusLords]=useState([1,3,7,9]),[routeData,setRouteData]=useState(null),[centerRouteRequest,setCenterRouteRequest]=useState(0),[forecastMode,setForecastMode]=useState('daily');
   const lastAnalysisRef=useRef({location:mission.location,at:Date.now()});
   const interpretationTimerRef=useRef(null);
   const lastInterpretationKeyRef=useRef('');
@@ -147,6 +148,7 @@ export default function MissionView({mission,gps,gpsError,onBack}){
       natalAsc:Number(natalChart?.asc).toFixed(5),
       focusHouses:[...focusHouses].sort((a,b)=>a-b),
       focusLords:[...focusLords].sort((a,b)=>a-b),
+      forecastMode,
       currentZone:geographicNakshatraZone?{house:geographicNakshatraZone.house,sign:geographicNakshatraZone.sign,nakshatra:geographicNakshatraZone.nakshatra?.name,pada:geographicNakshatraZone.nakshatra?.pada}:null,
       route:routeContext?{houses:routeContext.houseSequence,nakshatras:routeContext.nakshatraSequence,gandanta:routeContext.gandantaCrossings?.length||0,distanceMeters:routeContext.distanceMeters}:null
     });
@@ -162,14 +164,14 @@ export default function MissionView({mission,gps,gpsError,onBack}){
       requestPrivateInterpretation({
         chart,natalChart,houseLords,origin:analysisLocation,destination:journeyDestination,
         bearing:baseReading.bearing,direction:baseReading.direction,distanceKm:baseReading.distanceKm,
-        selectedDate:date,focusHouses,focusLords,localSpaceContacts,routeContext,currentZone:geographicNakshatraZone
+        selectedDate:date,focusHouses,focusLords,localSpaceContacts,routeContext,currentZone:geographicNakshatraZone,forecastMode
       }).then(r=>{if(!cancelled)setPrivateReading(r)})
         .catch(()=>{if(!cancelled)setPrivateReading(null)})
         .finally(()=>{if(!cancelled)setPrivateReadingBusy(false)});
     },220);
 
     return()=>{cancelled=true;clearTimeout(interpretationTimerRef.current)};
-  },[chart,natalChart,baseReading,houseLords,analysisLocation,journeyDestination,date,focusHouses,focusLords,localSpaceContacts,routeAnalysis,routeData,geographicNakshatraZone]);
+  },[chart,natalChart,baseReading,houseLords,analysisLocation,journeyDestination,date,focusHouses,focusLords,localSpaceContacts,routeAnalysis,routeData,geographicNakshatraZone,forecastMode]);
   const natalBirthBearing=useMemo(()=>cityCenter&&Number.isFinite(Number(mission.profile?.birthLat))&&Number.isFinite(Number(mission.profile?.birthLng))?bearingBetween(cityCenter,{lat:Number(mission.profile.birthLat),lng:Number(mission.profile.birthLng)}):null,[cityCenter,mission.profile?.birthLat,mission.profile?.birthLng]);
   const flatModeActive=streetViewActive&&streetCompassMode==='flat';
   const baseWheelSize=Math.max(180,Math.min(mapFullscreen?820:680,560*Math.sqrt(Math.max(30,wheelRadiusMeters)/804.672)));
@@ -232,6 +234,7 @@ export default function MissionView({mission,gps,gpsError,onBack}){
       <div className="mission-tabs"><button className={view==='compass'?'active':''} onClick={()=>setView('compass')}><Compass size={16}/> Compass</button><button className={view==='map'?'active':''} onClick={()=>setView('map')}><Map size={16}/> Map</button></div>
       <PlanetStrip planets={planets} selected={selected} onSelect={choosePlanet}/>
     </>}
+    <ForecastModeSelector value={forecastMode} onChange={setForecastMode}/>
     <PredictionCenter data={privateReading?.predictionCenter} busy={privateReadingBusy} selectedPlanet={selected} onPlanetSelect={id=>choosePlanet(planets.find(p=>p.id===id)||null)}/>
     {loadingChart&&!chart?<section className="card loading-chart"><Loader2 className="spin" size={20}/> Calculating sidereal transit chart…</section>:null}{chartError&&<section className="card error"><b>Transit compass could not be generated.</b> {chartError}</section>}
     {view==='compass'&&!mapFullscreen&&chart&&<div className="layout main"><section className="wheel-card"><ZodiacWheel chart={chart} natalAsc={natalChart?.asc} natalMc={natalChart?.mc} natalPlanets={natalPlanets} natalBirthBearing={natalBirthBearing} planets={planets} selectedPlanet={selected} onSelectPlanet={choosePlanet} selectedHouse={selectedHouse} onSelectHouse={chooseHouse} destinationBearing={bearing} followingPlanetId={followingPlanetId} onCenterRequest={()=>{setView('map');setCenterRouteRequest(v=>v+1)}}/></section><div className="stack"><LiveTrackingControls mode={trackingMode} onModeChange={changeTrackingMode} gps={gps} gpsError={gpsError} movedMeters={movedMeters} lastAnalysisAt={lastAnalysisAt}/><JourneyDirectionsPanel planet={followedPlanet} routeData={routeData} analysis={routeAnalysis} departureDate={date}/><OutcomeFeedback reading={reading}/></div></div>}
