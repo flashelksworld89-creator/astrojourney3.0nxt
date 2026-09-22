@@ -105,7 +105,7 @@ export async function POST(request){
       destinationZone:body.destinationZone||{},
       transitNatalAspects:body.transitNatalAspects||[],
       natalUsage:natalUsage(body),
-      modelVersion:'astrowalk-3.7.7-controlled-private-vocabulary'
+      modelVersion:'astrowalk-3.7.8-bhavat-bhavam-reinforcement'
     });
   }catch(error){
     console.error('Event-driven interpretation failed',error);
