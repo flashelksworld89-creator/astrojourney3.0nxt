@@ -1,37 +1,67 @@
 import { FALLBACK_VOCABULARY } from '../../../src/server/vocabulary.js';
 import { buildEventDrivenPrediction } from '../../../src/server/eventSynthesis.js';
 
-const VALID_CATEGORIES=['people','events','qualities','places','objects'];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 
-function normalizeEntries(value){
+function normalizeEntries(value,category='general'){
   if(!Array.isArray(value))return[];
   return value.map(item=>{
-    if(typeof item==='string')return {term:item.trim(),weight:.65};
-    if(item&&typeof item.term==='string')return {term:item.term.trim(),weight:clamp(Number(item.weight)||.65,0,1)};
+    if(typeof item==='string')return {term:item.trim(),weight:.65,requires:'general_context',category};
+    if(item&&typeof item.term==='string')return {
+      term:item.term.trim(),
+      weight:clamp(Number(item.weight)||.65,0,1),
+      requires:String(item.requires||'general_context').trim()||'general_context',
+      category:String(item.category||category||'general').toLowerCase()
+    };
     return null;
   }).filter(x=>x?.term);
 }
 
-function mergePlanetBank(base={},custom={}){
+function normalizeBank(bank={}){
   const out={};
-  for(const category of VALID_CATEGORIES){
-    const privateEntries=normalizeEntries(custom?.[category]);
-    out[category]=privateEntries.length?privateEntries:normalizeEntries(base?.[category]);
+  for(const [category,value] of Object.entries(bank||{})){
+    const entries=normalizeEntries(value,category);
+    if(entries.length)out[String(category).toLowerCase()]=entries;
   }
   return out;
 }
 
-function readVocabulary(){
-  let privateVocabulary={};
+function mergePlanetBank(base={},...customBanks){
+  const out=normalizeBank(base);
+  for(const bank of customBanks){
+    const normalized=normalizeBank(bank);
+    for(const [category,entries] of Object.entries(normalized)){
+      if(entries.length)out[category]=entries;
+    }
+  }
+  return out;
+}
+
+function readEnvironmentVocabulary(){
   try{
-    if(process.env.PLANET_VOCAB_JSON)privateVocabulary=JSON.parse(process.env.PLANET_VOCAB_JSON);
+    return process.env.PLANET_VOCAB_JSON?JSON.parse(process.env.PLANET_VOCAB_JSON):{};
   }catch(error){
     console.error('PLANET_VOCAB_JSON could not be parsed. Falling back to built-in terminology.',error);
+    return {};
   }
+}
+
+function readVocabulary(requestVocabulary){
+  const envVocabulary=readEnvironmentVocabulary();
+  const localVocabulary=requestVocabulary&&typeof requestVocabulary==='object'?requestVocabulary:{};
   const result={};
-  const planets=new Set([...Object.keys(FALLBACK_VOCABULARY),...Object.keys(privateVocabulary||{})]);
-  for(const planet of planets)result[planet]=mergePlanetBank(FALLBACK_VOCABULARY[planet],privateVocabulary?.[planet]);
+  const planets=new Set([
+    ...Object.keys(FALLBACK_VOCABULARY),
+    ...Object.keys(envVocabulary||{}),
+    ...Object.keys(localVocabulary||{})
+  ]);
+  for(const planet of planets){
+    result[planet]=mergePlanetBank(
+      FALLBACK_VOCABULARY[planet],
+      envVocabulary?.[planet],
+      localVocabulary?.[planet]
+    );
+  }
   return result;
 }
 
@@ -64,7 +94,8 @@ export async function POST(request){
       return Response.json({error:'Prediction evidence was not supplied'},{status:400});
     }
 
-    const vocabulary=readVocabulary();
+    const vocabulary=readVocabulary(body.privateVocabulary);
+    delete body.privateVocabulary;
     const predictionCenter=buildEventDrivenPrediction(body,vocabulary);
 
     return Response.json({
@@ -74,7 +105,7 @@ export async function POST(request){
       destinationZone:body.destinationZone||{},
       transitNatalAspects:body.transitNatalAspects||[],
       natalUsage:natalUsage(body),
-      modelVersion:'astrowalk-3.7.6-neuro-experiential-vedic-prose'
+      modelVersion:'astrowalk-3.7.7-controlled-private-vocabulary'
     });
   }catch(error){
     console.error('Event-driven interpretation failed',error);
