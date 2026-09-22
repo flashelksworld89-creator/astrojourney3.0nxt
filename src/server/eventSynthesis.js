@@ -229,7 +229,9 @@ function makeCandidate({body,vocab,planet,house,aspect,kind='house',context=null
   const nak=context?.nakshatra||planet.nakshatra;
   const nakMods=NAKSHATRA_MODIFIERS[nak]||[];
   const disp=dispositorState(body,planet);
-  const score=scoreAspect(aspect,(PRIORITY_WEIGHT[house]||0)+priorityExtra)+(kind==='destination'?.35:kind==='moon'?.3:0);
+  const bb=(body.formulaEvidence?.bhavatBhavam||[]).find(x=>Number(x.primaryHouse)===Number(house));
+  const bbBonus=bb?.reinforced?.18:0;
+  const score=scoreAspect(aspect,(PRIORITY_WEIGHT[house]||0)+priorityExtra+bbBonus)+(kind==='destination'?.35:kind==='moon'?.3:0);
   const seed=`${planet.id}|${house}|${asp(aspect).type}|${nak}|${kind}`;
   const actor=choose(terminology.people.filter(x=>!model.actors.includes(x)),seed+'|actor')||choose(model.actors,seed+'|actor');
   const object=choose(terminology.objects.filter(x=>!model.objects.includes(x)),seed+'|object')||choose(model.objects,seed+'|object');
@@ -241,7 +243,7 @@ function makeCandidate({body,vocab,planet,house,aspect,kind='house',context=null
   const verb=choose(pfunc.verbs,seed+'|verb');
   const tone=BENEFIC.has(planet.id)?'constructive':CHALLENGING.has(planet.id)?'challenging':'mixed';
   const dispCondition=disp?.ruler&&disp.ruler.id!==planet.id?choose(PLANET_FUNCTION[disp.ruler.id]?.conditions||[],seed+'|dispositor'):'';
-  return {id:seed,kind,category:house===1?'mindset':house===3||house===9?'journey':house===7?'people':kind==='destination'?'destination':'general',planetId:planet.id,planetName:planet.name,house,aspect:asp(aspect),score,tone,actor,action,object,place,modifier,condition,verb,terminologyEvent,dispositor:disp,dispositorCondition:dispCondition,label,context,terminology};
+  return {id:seed,kind,category:house===1?'mindset':house===3||house===9?'journey':house===7?'people':kind==='destination'?'destination':'general',planetId:planet.id,planetName:planet.name,house,aspect:asp(aspect),score,tone,actor,action,object,place,modifier,condition,verb,terminologyEvent,dispositor:disp,dispositorCondition:dispCondition,label,context,terminology,bhavatBhavam:bb||null};
 }
 
 function collectCandidates(body,vocab){
@@ -328,7 +330,8 @@ function basisLines(body,cands){
   return cands.slice(0,10).map(c=>{
     const p=phase(c.aspect);const ctx=c.context||{};
     const disp=c.dispositor?.ruler?`; dispositor ${c.dispositor.ruler.name} in ${c.dispositor.ruler.sign} House ${c.dispositor.ruler.house}`:c.dispositor?.selfRuled?'; self-disposed':'';
-    return `${c.planetName} ${String(c.aspect?.type||'aspect').toLowerCase()} ${c.label} (${Number(c.aspect?.orb||0).toFixed(2)}°${p?`, ${p}`:''})${ctx.sign?`; ${ctx.sign}`:''}${ctx.nakshatra?` / ${ctx.nakshatra}`:''}${disp}.`;
+    const bb=c.bhavatBhavam?.reinforced?`; Bhavat Bhavam H${c.house}→H${c.bhavatBhavam.derivedHouse} reinforced`:'';
+    return `${c.planetName} ${String(c.aspect?.type||'aspect').toLowerCase()} ${c.label} (${Number(c.aspect?.orb||0).toFixed(2)}°${p?`, ${p}`:''})${ctx.sign?`; ${ctx.sign}`:''}${ctx.nakshatra?` / ${ctx.nakshatra}`:''}${disp}${bb}.`;
   });
 }
 
