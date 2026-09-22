@@ -51,9 +51,9 @@ function highest(entries,n=3){return normalizeEntries(entries).sort((a,b)=>(Numb
 
 const CATEGORY_SLOT={
   person:'people',people:'people',person_symbol:'people',
-  place:'places',places:'places',location:'places',environment:'places',object_place:'places',event_place:'places',
-  event:'events',events:'events',action:'events',obstacle:'events',event_theme:'events',object_event:'events',travel_action:'events',information_action:'events',action_information:'events',action_state:'events',sensory_action:'events',
-  object:'objects',objects:'objects',body:'objects',body_sensory:'objects',body_motor:'objects',body_symbol:'objects',biology:'objects',substance:'objects',technology:'objects',object_action:'objects',object_nature:'objects',object_travel:'objects',object_system:'objects',people_or_object:'objects',object_or_quality:'objects',
+  place:'places',places:'places',location:'places',environment:'places',object_place:'places',event_place:'places',place_theme:'places',
+  event:'events',events:'events',action:'events',obstacle:'events',event_theme:'events',object_event:'events',travel_action:'events',travel:'events',information_action:'events',action_information:'events',action_state:'events',sensory_action:'events',action_object:'events',
+  object:'objects',objects:'objects',body:'objects',body_sensory:'objects',body_motor:'objects',body_symbol:'objects',biology:'objects',substance:'objects',technology:'objects',object_action:'objects',object_nature:'objects',object_travel:'objects',object_system:'objects',people_or_object:'objects',object_or_quality:'objects',information:'objects',environment_technology:'objects',object_theme:'objects',
   quality:'qualities',qualities:'qualities',theme:'qualities',mental:'qualities',sensory:'qualities',spatial:'qualities',cycle:'qualities',scale:'qualities',direction:'qualities',goal:'qualities',vedic_role:'qualities',vedic_timing:'qualities',astrology_context:'qualities',lunar_phase:'qualities',aspect:'qualities',sign:'qualities',nakshatra:'qualities',planet_link:'qualities',house_link:'qualities',brain_region:'qualities',motor:'qualities',sensory_quality:'qualities'
 };
 
@@ -119,8 +119,23 @@ function atomMatches(atom,{body,planet,house,aspect,context,kind}){
   if(a==='body_context'||a==='body'||a==='health')return [1,6,8,12].includes(Number(house))||['moon','mars'].includes(planet?.id);
   if(a==='object_context'||a==='object')return true;
   if(a==='time_context'||a==='timing'||a==='cycle')return true;
+  if(a==='sensory_context')return ['moon','mercury','jupiter'].includes(planet?.id)||[1,2,3,5,6].includes(Number(house));
+  if(a==='guidance_context'||a==='guidance'||a==='learning')return [9,11].includes(Number(house))||planet?.id==='jupiter';
+  if(a==='memory')return planet?.id==='moon'||[4,5].includes(Number(house));
+  if(a==='family'||a==='mother'||a==='parent'||a==='sibling')return [3,4].includes(Number(house))||planet?.id==='moon';
+  if(a==='goal'||a==='destination')return ['destination','route-placement'].includes(kind)||[9,10,11].includes(Number(house));
+  if(a==='calculation'||a==='change'||a==='computing'||a==='analysis')return planet?.id==='mercury'||Number(house)===3;
+  if(a==='structure'||a==='entry')return ['destination','route-field'].includes(kind)||[4,10].includes(Number(house));
+  if(a==='disruption'||a==='separation')return CHALLENGING.has(planet?.id)||[8,12].includes(Number(house));
+  if(a==='fluid')return ['moon','venus'].includes(planet?.id)||[4,8,12].includes(Number(house));
+  if(a==='public')return [10,11].includes(Number(house));
+  if(a==='urban')return ['route-field','destination','route-placement'].includes(kind);
+  if(a==='identity')return [1,10].includes(Number(house));
+  if(a==='height'||a==='position'||a==='field')return ['route-field','destination','route-placement'].includes(kind);
   if(a==='decision_context'||a==='decision')return [1,7,9,10].includes(Number(house));
+  if(a==='house2')return Number(house)===2;
   if(a==='house3')return Number(house)===3;
+  if(a==='house4')return Number(house)===4;
   if(a==='house5')return Number(house)===5;
   if(a==='house6')return Number(house)===6;
   if(a==='house7')return Number(house)===7;
